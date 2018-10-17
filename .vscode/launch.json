@@ -1,0 +1,25 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - App",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopOnEntry": false,
+            "mainClass": "simple.gui.App",
+            "args": "",
+            "projectName": "simplegui"
+        },
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - EmptyApp",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopOnEntry": false,
+            "mainClass": "simple.gui.tests.EmptyApp",
+            "args": ""
+        }
+    ]
+}
