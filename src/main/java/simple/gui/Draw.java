@@ -44,6 +44,14 @@ class Draw {
         _stroke = EMPTY_COLOR;
     }
 
+    public Draw(Image imageContext) {
+        _backImage = imageContext;
+        _g2D = _backImage.graphics2D();
+        _fontMetrics = _g2D.getFontMetrics();
+        _fill = EMPTY_COLOR;
+        _stroke = EMPTY_COLOR;
+    }
+
     //------- GETTERS -------//
 
     /** Returns the backing image object */
