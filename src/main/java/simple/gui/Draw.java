@@ -12,12 +12,12 @@ import java.awt.BasicStroke;
 
 class Draw {
     private static class _StrokeData {
-        public int thickness;
-        public boolean isRound;
+        public int      thickness;
+        public boolean  isRound;
 
         public _StrokeData(int thickness, boolean isRound) {
-            this.thickness = thickness;
-            this.isRound = isRound;
+            this.thickness  = thickness;
+            this.isRound    = isRound;
         }
 
         @Override
@@ -26,49 +26,122 @@ class Draw {
         }
     }
 
+    /** Stores font data for caching use. */
+    public static class SimpleFont{
+        private String  _name;
+        private int     _style;
+        private int     _size;
+
+        public String   name()  { return _name; }
+        public int      style() { return _style; }
+        public int      size()  { return _size; }
+
+        public SimpleFont(String name, int style, int size) {
+            _name   = name;
+            _style  = style;
+            _size   = size;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(_name, _style, _size);
+        }
+    }
+
+    /** Multiplies each value in a Color object by a constant.
+     * @param c				Base color
+     * @param scale			Constant scalar value **/
+    public static Color scaleColor(Color c, float scale) {
+        if (c==null) return null;
+        return new Color((int)(c.getRed()*scale), (int)(c.getGreen()*scale), (int)(c.getBlue()*scale));
+    }
+    /** Multiplies each value in a Color object by a constant. Each color is multiplied by a different constant.
+     * @param c				Base color
+     * @param rscale		Constant scalar value for red
+     * @param gscale		Constant scalar value for green
+     * @param bscale		Constant scalar value for blue**/
+    public static Color scaleColor(Color c, float rscale, float gscale, float bscale) {
+        if (c==null) return null;
+        return new Color(c.getRed()*rscale, c.getGreen()*gscale, c.getBlue()*bscale);
+    }
+    /** Multiplies each value in a Color object by a constant. Each color is multiplied by a different constant.
+     * @param c             Base color
+     * @param rscale        Constant scalar value for red
+     * @param gscale        Constant scalar value for green
+     * @param bscale        Constant scalar value for blue
+     * @param ascale        Constant scalar value for alpha**/
+    public static Color scaleColor(Color c, float rscale, float gscale, float bscale, float ascale) {
+        if (c==null) return null;
+        return new Color(c.getRed()*rscale, c.getGreen()*gscale, c.getBlue()*bscale, c.getAlpha()*ascale);
+    }
+
     public static final Color EMPTY_COLOR = new Color(0, 0, 0, 0);
     
     private static final Map<_StrokeData, BasicStroke> _STROKE_CACHE = new HashMap<_StrokeData, BasicStroke>();
+    private static final Map<Draw.SimpleFont, Font> _FONT_CACHE = new HashMap<Draw.SimpleFont, Font>();
 
-    private Image       _backImage;
-    private Graphics2D  _g2D;
-    private FontMetrics _fontMetrics;
-    private Color       _fill;
-    private Color       _stroke;
+    private Image           _backImage;
+    private Graphics2D      _g2D;
+    private Draw.SimpleFont _font;
+    private FontMetrics     _fontMetrics;
+    private Color           _fill;
+    private Color           _stroke;
 
     public Draw(Vector2D dimensions) {
-        _backImage = new Image(dimensions.x(), dimensions.y());
-        _g2D = _backImage.graphics2D();
-        _fontMetrics = _g2D.getFontMetrics();
-        _fill = EMPTY_COLOR;
-        _stroke = EMPTY_COLOR;
+        _backImage      = new Image(dimensions.x(), dimensions.y());
+        _g2D            = _backImage.graphics2D();
+        _fill           = EMPTY_COLOR;
+        _stroke         = EMPTY_COLOR;
+
+        setFont(new Draw.SimpleFont("Consolas", Font.PLAIN, 12));
+        setAntiAliasing(true);
     }
 
     public Draw(Image imageContext) {
-        _backImage = imageContext;
-        _g2D = _backImage.graphics2D();
-        _fontMetrics = _g2D.getFontMetrics();
-        _fill = EMPTY_COLOR;
-        _stroke = EMPTY_COLOR;
+        _backImage      = imageContext;
+        _g2D            = _backImage.graphics2D();
+        _fontMetrics    = _g2D.getFontMetrics();
+        _fill           = EMPTY_COLOR;
+        _stroke         = EMPTY_COLOR;
+
+        setFont(new Draw.SimpleFont("Consolas", Font.PLAIN, 12));
+        setAntiAliasing(true);
     }
 
-    //------- GETTERS -------//
+    //////////////////////////////
+    //------- PROPERTIES -------//
+    //////////////////////////////
+
+    /** Returns the width of the backing image */
+    public int              width()         { return _backImage.width(); }
+
+    /** Returns the height of the backing image */
+    public int              height()        { return _backImage.height(); }
+
+    /** Returns a Vector2D of the width and height */
+    public Vector2D         dimensions()    { return new Vector2D(width(), height()); }
 
     /** Returns the backing image object */
-    public Image       backImage()   { return _backImage; }
+    public Image            backImage()     { return _backImage; }
 
-    /** Returns the DrawObject's stored Graphics2D object. */
-    public Graphics2D  g2D()         { return _g2D; }
+    /** Returns the stored Graphics2D object. */
+    public Graphics2D       g2D()           { return _g2D; }
+
+    /** Returns the current text drawing font*/
+    public Draw.SimpleFont  font()          { return _font; }
 
     /** Returns a FontMetrics object from the stored Graphics2D object's current font. */
-    public FontMetrics fontMetrics() { return _fontMetrics; }
+    public FontMetrics      fontMetrics()   { return _fontMetrics; }
 
     /** Returns the stored fill color */
-    public Color       fill()        { return _fill; }
+    public Color            fill()          { return _fill; }
 
-    public Color       stroke()      { return _stroke; }
+    /** Returns the stored stroke color */
+    public Color            stroke()        { return _stroke; }
     
+    ///////////////////////////
     //------- SETTERS -------//
+    ///////////////////////////
 
     /**
      * Sets whether to render text with anti-aliasing enabled.
@@ -90,19 +163,19 @@ class Draw {
     /** Sets the drawing stroke color. Stroke is used for the borders of shapes as well as for rendering text. This will set
      * the stroke thickness to 1.
      * @param stroke    New color to use for the stroke
-    */
+     */
     public void setStroke(Color stroke) { setStroke(stroke, 1); }
 
     /** Sets the drawing stroke color. Stroke is used for the borders of shapes as well as for rendering text.
      * @param stroke    New color to use for the stroke
      * @param thickness Thickness value for the stroke on drawing
-    */
+     */
     public void setStroke(Color stroke, int thickness) { _setStroke(stroke, thickness); }
 
     /** Sets the drawing stroke color and makes the ends of the stroke round. Stroke is used for the borders of shapes as well as for rendering text.
      * @param stroke    New color to use for the stroke
      * @param thickness Thickness value for the stroke on drawing
-    */
+     */
     public void setStrokeRound(Color stroke, int thickness) { _setStrokeRound(stroke, thickness); }
         
     // Retrieves a stroke object from the cache or adds to it, then sets the stroke
@@ -130,5 +203,365 @@ class Draw {
         }
         _g2D.setStroke(bs);
         _stroke = stroke;
+    }
+
+    /** Set the font to use for text drawing operations
+     * @param font  Draw.SimpleFont object
+     */
+    public void setFont(Draw.SimpleFont font) { 
+        Font awtFont;
+        
+        if (_FONT_CACHE.containsKey(font)) {
+            awtFont = _FONT_CACHE.get(font);
+        } else {
+            awtFont = new Font(font._name, font._size, font._style);
+            _FONT_CACHE.put(font, awtFont);
+        }
+
+        _font = font;
+        _g2D.setFont(awtFont);
+        _fontMetrics = _g2D.getFontMetrics();
+    }
+
+    /////////////////////////////////
+    //------- SHAPE DRAWING -------//
+    /////////////////////////////////
+
+    /** Draws a line from ({x1, y1}) to ({x2, y2}). Color is set by stroke
+     * @param x1    x-coordinate of first point
+     * @param y1    y-coordinate of first point
+     * @param x2    x-coordinate of second point
+     * @param y2    y-coordinate of second point
+     */
+    public void line(int x1, int y1, int x2, int y2) {
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawLine(x1, y1, x2, y2);
+        }
+    }
+
+    /** Draws a line from {p1} to {p2}. Color is set by stroke
+     * @param p1    Coordinate of first point
+     * @param p2    Coordinate of second point
+     */
+    public void line(Vector2D p1, Vector2D p2) {
+        line(p1.x(), p1.y(), p2.x(), p2.y());
+    }
+
+    /** Draws a polygon defined by a series of points. The outline is specified by stroke, the fill by fill. 
+     * @param x         series of x coordinates of the polygon. 
+     * @param y         series of y coordinates of the polygon.
+     * @param numPoints Number of points to use.
+     */
+    public void polygon(int[] x, int[] y, int numPoints) {
+        if (_fill != null) {
+            _g2D.setColor(_fill);
+            _g2D.fillPolygon(x, y, numPoints);
+        }
+        
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawPolygon(x, y, numPoints);
+        }
+    }
+
+    /** Draws a polygon defined by a series of points. The outline is specified by stroke, the fill by fill. 
+     * @param points   Sequence of Vector2D objects 
+     */
+    public void polygon(Vector2D... points) {
+        int[] x_coord = new int[points.length];
+        int[] y_coord = new int[points.length];
+
+        for (int i=0; i<points.length; i++) {
+            x_coord[i] = points[i].x();
+            y_coord[i] = points[i].y();
+        }
+
+        polygon(x_coord, y_coord, points.length);
+    }
+
+    /** Draws a rectangle with the bottom-left point at ({x}, {y}) with the dimensions ({width}, {height})
+     * @param x         x-coordinate of bottom-left corner
+     * @param y         y-coordinate of bottom-left corner
+     * @param width     Width of rectangle
+     * @param height    Height of rectangle
+     */
+    public void rect(int x, int y, int width, int height) {
+        if (_fill != null) {
+            _g2D.setColor(_fill);
+            _g2D.fillRect(x, y, width, height);
+        }
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawRect(x, y, width, height);
+        }
+    }
+
+    /** Draws a rectangle with the bottom-left point at {pos} with the dimensions {dim}
+     * @param pos   Coordinate of bottom-left corner
+     * @param dim   Dimensions of rectangle
+     */
+    public void rect(Vector2D pos, Vector2D dim) {
+        rect(pos.x(), pos.y(), dim.x(), dim.y());
+    }
+
+    /** Draws an arc with the center point at ({x}, {y}) with the dimensions ({width}, {height}), between the angles {startAngle} and {endAngle}
+     * @param x             x-coordinate of center
+     * @param y             y-coordinate of center
+     * @param width         Width of rectangle
+     * @param height        Height of rectangle
+     * @param startAngle    Angle to begin drawing the arc
+     * @param endAngle      Angle to end drawing the arc
+     */
+    public void arc(int x, int y, int width, int height, int startAngle, int endAngle) {
+        if (_fill != null) {
+            _g2D.setColor(_fill);
+            _g2D.fillArc(x, y, width, height, startAngle, endAngle);
+        }
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawArc(x, y, width, height, startAngle, endAngle);
+        }
+    }
+
+    /** Draws an arc with the center point at {pos} with the dimensions {dim}, between the angles {startAngle} and {endAngle}
+     * @param pos           Coordinate of center
+     * @param dim           Dimensions of rectangle
+     * @param startAngle    Angle to begin drawing the arc
+     * @param endAngle      Angle to end drawing the arc
+     */
+    public void arc(Vector2D pos, Vector2D dim, int startAngle, int endAngle) {
+        arc(pos.x(), pos.y(), dim.x(), dim.y(), startAngle, endAngle);
+    }
+
+    /** Draws an oval with the bottom-left point at ({x}, {y}) with dimensions ({width}, {height})
+     * @param x         x-coordinate of bottom-left point
+     * @param y         y-coordinate of bottom-left point
+     * @param width     Width of oval
+     * @param height    Height of oval
+     */
+    public void oval(int x, int y, int width, int height) {
+        if (_fill != null) {
+            _g2D.setColor(_fill);
+            _g2D.fillOval(x, y, width, height);
+        }
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawOval(x, y, width, height);
+        }
+    }
+
+    /** Draws an oval with the bottom-left point at {pos} with dimensions {dim}
+     * @param pos   Coordinate of bottom-left point
+     * @param dim   Dimensions of oval
+     */
+    public void oval(Vector2D pos, Vector2D dim) {
+        oval(pos.x(), pos.y(), dim.x(), dim.y());
+    }
+
+     /** Draws an oval with the center point at ({x}, {y}) with radii ({radiusX}, {radiusY})
+     * @param x         x-coordinate of center
+     * @param y         y-coordinate of center
+     * @param radiusX   x-radius of oval
+     * @param radiusY   y-radius of oval
+     */
+    public void ovalCentered(int x, int y, int radiusX, int radiusY) {
+        if (_fill != null) {
+            _g2D.setColor(_fill);
+            _g2D.fillOval(x-radiusX, y-radiusY, radiusX*2, radiusY*2);
+        }
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawOval(x-radiusX, y-radiusY, radiusX*2, radiusY*2);
+        }
+    }
+
+    /** Draws an oval with the center point at {pos} with {dim} storing x and y radii
+     * @param pos   Coordinate of center
+     * @param dim   Dimensions of oval
+     */
+    public void ovalCentered(Vector2D pos, Vector2D dim) {
+        oval(pos.x(), pos.y(), dim.x(), dim.y());
+    }
+
+    ////////////////////////////////
+    //------- TEXT DRAWING -------//
+    ////////////////////////////////
+
+    /** Draw text with the bottom-left corner at ({x}, {y})
+     * @param textToDraw    Text to draw
+     * @param x             x-coordinate of bottom-left corner
+     * @param y             y-coordinate of bottom-left corner
+     */
+    public void text(String textToDraw, int x, int y) {
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawString(textToDraw, x, y + _fontMetrics.getMaxAscent());
+        }
+    }
+
+    /** Draw text with the bottom-left corner at {pos}
+     * @param textToDraw    Text to draw
+     * @param pos           Coordinate of bottom-left corner
+     */
+    public void text(String textToDraw, Vector2D pos) {
+        text(textToDraw, pos.x(), pos.y());
+    }
+    
+    /** Draw text using {font} with the bottom-left corner at ({x}, {y})
+     * @param textToDraw    Text to draw
+     * @param x             x-coordinate of bottom-left corner
+     * @param y             y-coordinate of bottom-left corner
+     * @param font          Font to set drawing context to
+     */
+    public void text(String textToDraw, int x, int y, SimpleFont font) {
+        setFont(font);
+        text(textToDraw, x, y);
+    }
+    
+    /** Draw text using {font} with the bottom-left corner at {pos}
+     * @param textToDraw    Text to draw
+     * @param pos           Coordinate of bottom-left corner
+     * @param font          Font to set drawing context to
+     */
+    public void text(String textToDraw, Vector2D pos, SimpleFont font) {
+        setFont(font);
+        text(textToDraw, pos.x(), pos.y());
+    }
+
+    /** Draw text with the bottom-right corner at ({x}, {y})
+     * @param textToDraw    Text to draw
+     * @param x             x-coordinate of bottom-right corner
+     * @param y             y-coordinate of bottom-right corner
+     */
+    public void textRight(String textToDraw, int x, int y) {
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawString(textToDraw, x-_fontMetrics.stringWidth(textToDraw), y + _fontMetrics.getMaxAscent());
+        }
+    }
+
+    /** Draw text with the bottom-right corner at {pos}
+     * @param textToDraw    Text to draw
+     * @param pos           Coordinate of bottom-right corner
+     */
+    public void textRight(String textToDraw, Vector2D pos) {
+        textRight(textToDraw, pos.x(), pos.y());
+    }
+    
+    /** Draw text using {font} with the bottom-right corner at ({x}, {y})
+     * @param textToDraw    Text to draw
+     * @param x             x-coordinate of bottom-right corner
+     * @param y             y-coordinate of bottom-right corner
+     * @param font          Font to set drawing context to
+     */
+    public void textRight(String textToDraw, int x, int y, SimpleFont font) {
+        setFont(font);
+        textRight(textToDraw, x, y);
+    }
+    
+    /** Draw text using {font} with the bottom-right corner at {pos}
+     * @param textToDraw    Text to draw
+     * @param pos           Coordinate of bottom-right corner
+     * @param font          Font to set drawing context to
+     */
+    public void textRight(String textToDraw, Vector2D pos, SimpleFont font) {
+        setFont(font);
+        textRight(textToDraw, pos.x(), pos.y());
+    }
+
+    /** Draw text with the center point at ({x}, {y})
+     * @param textToDraw    Text to draw
+     * @param x             x-coordinate of center point
+     * @param y             y-coordinate of center point
+     */
+    public void textCentered(String textToDraw, int x, int y) {
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawString(textToDraw, x - _fontMetrics.stringWidth(textToDraw)/2, (int)(y + _fontMetrics.getStringBounds(textToDraw, _g2D).getHeight()/4.0));
+        }
+    }
+
+    /** Draw text with the center point at {pos}
+     * @param textToDraw    Text to draw
+     * @param pos           Coordinate of center point
+     */
+    public void textCentered(String textToDraw, Vector2D pos) {
+        textCentered(textToDraw, pos.x(), pos.y());
+    }
+    
+    /** Draw text using {font} with the center point at ({x}, {y})
+     * @param textToDraw    Text to draw
+     * @param x             x-coordinate of center point
+     * @param y             y-coordinate of center point
+     * @param font          Font to set drawing context to
+     */
+    public void textCentered(String textToDraw, int x, int y, SimpleFont font) {
+        setFont(font);
+        textCentered(textToDraw, x, y);
+    }
+    
+    /** Draw text using {font} with the center point at {pos}
+     * @param textToDraw    Text to draw
+     * @param pos           Coordinate of center point
+     * @param font          Font to set drawing context to
+     */
+    public void textCentered(String textToDraw, Vector2D pos, SimpleFont font) {
+        setFont(font);
+        textCentered(textToDraw, pos.x(), pos.y());
+    }
+
+    /////////////////////////////////
+    //------- IMAGE DRAWING -------//
+    /////////////////////////////////
+
+    /** Draw image with the bottom-left corner at ({x}, {y})
+     * @param imageToDraw   Image to draw
+     * @param x             x-coordinate of bottom-left corner
+     * @param y             x-coordinate of bottom-left corner
+     */
+    public void image(Image imageToDraw, int x, int y) {
+        imageToDraw.draw(_g2D, x, y);
+    }
+
+    /** Draw image with the bottom-left corner at {pos}
+     * @param imageToDraw   Image to draw
+     * @param pos           Coordinate of bottom-left corner
+     */
+    public void image(Image imageToDraw, Vector2D pos) {
+        imageToDraw.draw(_g2D, pos.x(), pos.y());
+    }
+
+    /** Draw image with the center point at ({x}, {y})
+     * @param imageToDraw   Image to draw
+     * @param x             x-coordinate of center
+     * @param y             x-coordinate of center
+     */
+    public void imageCentered(Image imageToDraw, int x, int y) {
+        imageToDraw.drawCentered(_g2D, x, y);
+    }
+    /** Draw image with the center point at {pos}
+     * @param imageToDraw   Image to draw
+     * @param pos           Coordinate of center
+     */
+    public void imageCentered(Image imageToDraw, Vector2D pos) {
+        imageToDraw.drawCentered(_g2D, pos.x(), pos.y());
+    }
+
+    /** Draw image with the center point at ({x}, {y}) rotated by {angle} radians
+     * @param imageToDraw   Image to draw
+     * @param x             x-coordinate of center
+     * @param y             x-coordinate of center
+     */
+    public void imageRotated(Image imageToDraw, int x, int y, double angle) {
+        imageToDraw.drawRotated(_g2D, x, y, angle);
+    }
+
+    /** Draw image with the center point at {pos} rotated by {angle} radians
+     * @param imageToDraw   Image to draw
+     * @param pos           Coordinate of center
+     */
+    public void imageRotated(Image imageToDraw, Vector2D pos, double angle) {
+        imageToDraw.drawRotated(_g2D, pos.x(), pos.y(), angle);
     }
 }

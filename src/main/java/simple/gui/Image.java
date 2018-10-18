@@ -96,13 +96,13 @@ public final class Image {
 	
     private BufferedImage _image;            
     private String _filename;                   
-    private int _w, _h;          
+    private int _width, _height;          
     private Orientation _orientation;
 
     /** Returns the width of the image. **/
-    public int w() { return _w; }
+    public int width() { return _width; }
     /** Returns the height of the image. **/
-    public int h() { return _h; }
+    public int height() { return _height; }
     /** Returns orientation of the image **/
     public Orientation orientation() { return _orientation; }
     /** Returns the BufferedImage object from the image. **/
@@ -120,21 +120,21 @@ public final class Image {
     
     /** Creates an empty image with a default filename of the given width and height. **/
     public Image(int w, int h) {
-        if (_w < 0) throw new IllegalArgumentException("width must be non-negative");
-        if (_h < 0) throw new IllegalArgumentException("height must be non-negative");
-        _w = w;
-        _h = h;
-        _image = new BufferedImage(_w, _h, BufferedImage.TYPE_INT_ARGB);
+        if (_width < 0) throw new IllegalArgumentException("width must be non-negative");
+        if (_height < 0) throw new IllegalArgumentException("height must be non-negative");
+        _width = w;
+        _height = h;
+        _image = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_ARGB);
         // set to TYPE_INT_ARGB to support transparency
-        _filename = _w + "-by-" + _h;
+        _filename = _width + "-by-" + _height;
         _orientation = Orientation.UP;
     }
 
     /** Creates an image using the same filename and color data from another image. **/
     public Image(Image image) {
-        _w = image.w();
-        _h = image.h();
-        _image = new BufferedImage(_w, _h, BufferedImage.TYPE_INT_ARGB);
+        _width = image.width();
+        _height = image.height();
+        _image = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_ARGB);
         _filename = image.fileName();
         setPixels(image.getPixelsNoCopy());
         _orientation = image.orientation();
@@ -145,16 +145,16 @@ public final class Image {
      * @param copyImage If enabled, it will make a new BufferedImage by copying pixel data from
      * the original. Otherwise, it will use the same base object. **/
     public Image(BufferedImage image, boolean copyImage) {
-        _w = image.getWidth();
-        _h = image.getHeight();
+        _width = image.getWidth();
+        _height = image.getHeight();
         
         if (copyImage) {
-            _image = new BufferedImage(_w, _h, BufferedImage.TYPE_INT_ARGB);
+            _image = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_ARGB);
             setPixels(((DataBufferInt)image.getRaster().getDataBuffer()).getData());
         } else {
             _image = image;
         }
-        _filename = _w + "-by-" + _h;
+        _filename = _width + "-by-" + _height;
         _orientation = Orientation.UP;
     }
     
@@ -165,10 +165,10 @@ public final class Image {
 	    	imageToCopy = new BufferedImage(temp.getWidth(), temp.getHeight(), BufferedImage.TYPE_INT_ARGB);
 	    	imageToCopy.createGraphics().drawImage(temp, 0, 0, null);
 			
-			_w = imageToCopy.getWidth();
-			_h = imageToCopy.getHeight();
-			_image = new BufferedImage(_w, _h, BufferedImage.TYPE_INT_ARGB);
-			_filename = _w + "-by-" + _h;
+			_width = imageToCopy.getWidth();
+			_height = imageToCopy.getHeight();
+			_image = new BufferedImage(_width, _height, BufferedImage.TYPE_INT_ARGB);
+			_filename = _width + "-by-" + _height;
 			setPixels(((DataBufferInt)imageToCopy.getRaster().getDataBuffer()).getData());
 			_orientation = Orientation.UP;
 		} catch (IOException e) {
@@ -196,8 +196,8 @@ public final class Image {
                 if (url == null) { url = new URL(_filename); }
                 _image = ImageIO.read(url);
             }
-            _w  = _image.getWidth();
-            _h = _image.getHeight();
+            _width  = _image.getWidth();
+            _height = _image.getHeight();
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -220,8 +220,8 @@ public final class Image {
         if (_image == null) {
             throw new RuntimeException("Invalid image file: " + file);
         }
-        _w  = _image.getWidth();
-        _h = _image.getHeight();
+        _width  = _image.getWidth();
+        _height = _image.getHeight();
         _filename = file.getName();
         _orientation = Orientation.UP;
     }
@@ -249,25 +249,25 @@ public final class Image {
     public Image resize(int w, int h) {
     	Image newImage = new Image(w, h);
     	newImage.setOrientation(_orientation);
-    	float newToOldScaleX = (float)_w/w;
-    	float newToOldScaleY = (float)_h/h;
+    	float newToOldScaleX = (float)_width/w;
+    	float newToOldScaleY = (float)_height/h;
     	
     	int[] newImagePixels = newImage.getPixelsNoCopy();
     	int[] oldImagePixels = this.getPixelsNoCopy();
 		for (int x=0; x<w; x++) {
 			for (int y=0; y<h; y++) {
-				newImagePixels[x + y*w] = oldImagePixels[(int)(x*newToOldScaleX) + _w*(int)(y*newToOldScaleY)];
+				newImagePixels[x + y*w] = oldImagePixels[(int)(x*newToOldScaleX) + _width*(int)(y*newToOldScaleY)];
     		}
 		}
 		return newImage;
     }
     public Image resizeScaledWidth(int w) {
-    	double ratio =  w/(double)_w;
-    	return resize(w, (int)(_h*ratio));
+    	double ratio =  w/(double)_width;
+    	return resize(w, (int)(_height*ratio));
     }
     public Image resizeScaledHeight(int h) {
-    	double ratio =  h/(double)_h;
-    	return resize((int)(_w*ratio), h);
+    	double ratio =  h/(double)_height;
+    	return resize((int)(_width*ratio), h);
     }
     
     /** Returns a new image set to the new orientation given. **/
@@ -277,16 +277,16 @@ public final class Image {
     /** Returns a new image set to the new orientation given. **/
     public Image reorient(Orientation orientation) {
     	int[][] matrix = Orientation.getRotationMatrix(_orientation, orientation);
-    	int newWidth = Math.abs(_w*matrix[0][0] + _h*matrix[0][1]);
-    	int newHeight = Math.abs(_w*matrix[1][0] + _h*matrix[1][1]);
+    	int newWidth = Math.abs(_width*matrix[0][0] + _height*matrix[0][1]);
+    	int newHeight = Math.abs(_width*matrix[1][0] + _height*matrix[1][1]);
     	Image newImage = new Image(newWidth, newHeight);
     	newImage.setOrientation(orientation);
     	
     	int[] newImagePixels = newImage.getPixelsNoCopy();
     	int[] oldImagePixels = this.getPixelsNoCopy();
     	int newx=0, newy=0;    	
-    	for (int x=0; x<_w; x++) {
-    		for (int y=0; y<_h; y++) {
+    	for (int x=0; x<_width; x++) {
+    		for (int y=0; y<_height; y++) {
     			newx = x*matrix[0][0] + y*matrix[0][1];
     			if (newx < 0) {
     				newx += newWidth;
@@ -296,7 +296,7 @@ public final class Image {
     				newy += newHeight;
     			}
     	    	
-    	    	newImagePixels[newx + newy*newWidth] = oldImagePixels[x + _w*y];
+    	    	newImagePixels[newx + newy*newWidth] = oldImagePixels[x + _width*y];
     		}
     	}
     	return newImage;
@@ -313,20 +313,20 @@ public final class Image {
     
     /** Returns the color data of the image at the pixel (w, h) as an integer. Note that the point (0, 0) is the origin of the image, not the screen. **/
     public int get(int x, int y) {
-        if (x < 0 || x >= _w)  throw new IndexOutOfBoundsException("x must be between 0 and " + (_w-1) + ", recieved " + x);
-        if (y < 0 || y >= _h) throw new IndexOutOfBoundsException("y must be between 0 and " + (_h-1) + ", recieved " + y);
+        if (x < 0 || x >= _width)  throw new IndexOutOfBoundsException("x must be between 0 and " + (_width-1) + ", recieved " + x);
+        if (y < 0 || y >= _height) throw new IndexOutOfBoundsException("y must be between 0 and " + (_height-1) + ", recieved " + y);
         return _image.getRGB(x, y);
     }
     /** Returns the color data of the image at the pixel (w, h) as a Color object. Note that the point (0, 0) is the origin of the image, not the screen. **/
     public Color getColor(int x, int y) {
-        if (x < 0 || x >= _w)  throw new IndexOutOfBoundsException("x must be between 0 and " + (_w-1) + ", recieved " + x);
-        if (y < 0 || y >= _h) throw new IndexOutOfBoundsException("y must be between 0 and " + (_h-1) + ", recieved " + y);
+        if (x < 0 || x >= _width)  throw new IndexOutOfBoundsException("x must be between 0 and " + (_width-1) + ", recieved " + x);
+        if (y < 0 || y >= _height) throw new IndexOutOfBoundsException("y must be between 0 and " + (_height-1) + ", recieved " + y);
         return new Color(_image.getRGB(x, y), true);
     }
     /** Returns the color data of all the pixels as an array of integers. Note that this creates a copy of the original pixels. **/
     public int[] getPixels() {
-    	int[] pixelData = new int[_w*_h];
-    	System.arraycopy(((DataBufferInt)_image.getRaster().getDataBuffer()).getData(), 0, pixelData, 0, _w*_h);
+    	int[] pixelData = new int[_width*_height];
+    	System.arraycopy(((DataBufferInt)_image.getRaster().getDataBuffer()).getData(), 0, pixelData, 0, _width*_height);
     	return pixelData;
     }
     
@@ -340,20 +340,20 @@ public final class Image {
     
     /** Sets the color data of the image at the pixel (w, h) using an integer. Note that th point (0, 0) is the origin of the image, not the screen. **/
     public void set(int x, int y, int color) {
-        if (x < 0 || x >= _w)  throw new IndexOutOfBoundsException("x must be between 0 and " + (_w-1) + ", recieved " + x);
-        if (y < 0 || y >= _h) throw new IndexOutOfBoundsException("y must be between 0 and " + (_h-1) + ", recieved " + y);
+        if (x < 0 || x >= _width)  throw new IndexOutOfBoundsException("x must be between 0 and " + (_width-1) + ", recieved " + x);
+        if (y < 0 || y >= _height) throw new IndexOutOfBoundsException("y must be between 0 and " + (_height-1) + ", recieved " + y);
         _image.setRGB(x, y, color);
     }
     /** Sets the color data of the image at the pixel (w, h) using a Color object. Note that th point (0, 0) is the origin of the image, not the screen. **/
     public void setColor(int x, int y, Color color) {
-        if (x < 0 || x >= _w)  throw new IndexOutOfBoundsException("x must be between 0 and " + (_w-1) + ", recieved " + x);
-        if (y < 0 || y >= _h) throw new IndexOutOfBoundsException("y must be between 0 and " + (_h-1) + ", recieved " + y);
+        if (x < 0 || x >= _width)  throw new IndexOutOfBoundsException("x must be between 0 and " + (_width-1) + ", recieved " + x);
+        if (y < 0 || y >= _height) throw new IndexOutOfBoundsException("y must be between 0 and " + (_height-1) + ", recieved " + y);
         if (color == null) throw new NullPointerException("can't set Color to null");
         _image.setRGB(x, y, color.getRGB());
     }
     /** Sets all the color data of the image from an array of integers. **/
     public void setPixels(int[] pixelData) {
-    	System.arraycopy(pixelData, 0, ((DataBufferInt)_image.getRaster().getDataBuffer()).getData(), 0, _w*_h);
+    	System.arraycopy(pixelData, 0, ((DataBufferInt)_image.getRaster().getDataBuffer()).getData(), 0, _width*_height);
     }
 
     /** Draws an image to a Graphics2D object with the origin at point x, y on the screen. 
@@ -380,12 +380,12 @@ public final class Image {
         if (obj == null) return false;
         if (obj.getClass() != this.getClass()) return false;
         Image that = (Image) obj;
-        if (this.w()  != that.w())  return false;
-        if (this.h() != that.h()) return false;
+        if (this.width()  != that.width())  return false;
+        if (this.height() != that.height()) return false;
         
         int[] thatImagePixels = that.getPixelsNoCopy();
     	int[] thisImagePixels = this.getPixelsNoCopy();
-    	int size = _w*_h;
+    	int size = _width*_height;
     	for (int i = 0; i < size; i++)
     		if (thisImagePixels[i] != thatImagePixels[i]) return false;
         return true;

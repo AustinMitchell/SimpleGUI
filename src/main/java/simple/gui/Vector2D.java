@@ -1,10 +1,8 @@
 package simple.gui;
 
 import java.util.Objects;
-import java.util.Vector;
 
-/** Represents a 2D vector and a bunch of operations on vectors.
- */
+/** Represents a 2D vector and a bunch of operations on vectors. */
 public class Vector2D {	
     /** The components of the vector**/
     public double x, y;
