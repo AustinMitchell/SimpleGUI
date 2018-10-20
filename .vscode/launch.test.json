@@ -1,0 +1,30 @@
+{
+    "run": {
+        "default": "",
+        "items": [
+            {
+                "name": "simplegui",
+                "projectName": "simplegui",
+                "workingDirectory": "f:\\Code\\Java\\SimpleGUI",
+                "args": [],
+                "vmargs": [],
+                "env": {},
+                "preLaunchTask": ""
+            }
+        ]
+    },
+    "debug": {
+        "default": "",
+        "items": [
+            {
+                "name": "simplegui",
+                "projectName": "simplegui",
+                "workingDirectory": "f:\\Code\\Java\\SimpleGUI",
+                "args": [],
+                "vmargs": [],
+                "env": {},
+                "preLaunchTask": ""
+            }
+        ]
+    }
+}
