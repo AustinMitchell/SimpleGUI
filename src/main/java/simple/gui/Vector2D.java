@@ -27,21 +27,6 @@ public class Vector2D {
         this.x = toCopy.x;
         this.y = toCopy.y;
     }
-    /** 
-     * Creates a new vector as [m*cos(t), m*sin(t)] 
-     * @param magnitude			magnitude of vector
-     * @param radians			angle of vector
-     * @param isRad 	denotes whether to use t as degrees or radians
-     **/
-    public Vector2D(double magnitude, double radians, boolean isRad) {
-        if (isRad) {
-            this.x = magnitude*Math.cos(radians);
-            this.y = magnitude*Math.sin(radians);
-        } else {
-            this.x = magnitude*Math.cos(Math.toRadians(radians));
-            this.y = magnitude*Math.sin(Math.toRadians(radians));
-        }
-    }
 
     /** Binds the vector inside a box, whose bottom left corner and top right corner are defined by {p1} and {p2}. When called, this method will
      * adjust the x and y components of this vector to keep them within the bounding box.
