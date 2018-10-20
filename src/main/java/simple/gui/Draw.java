@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.awt.FontMetrics;
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 
 class Draw {
@@ -80,29 +81,34 @@ class Draw {
     private static final Map<_StrokeData, BasicStroke> _STROKE_CACHE = new HashMap<_StrokeData, BasicStroke>();
     private static final Map<Draw.SimpleFont, Font> _FONT_CACHE = new HashMap<Draw.SimpleFont, Font>();
 
-    private Image           _backImage;
-    private Graphics2D      _g2D;
+    private Image           _canvas;
+    private Graphics2D      _g2D;  
     private Draw.SimpleFont _font;
     private FontMetrics     _fontMetrics;
     private Color           _fill;
     private Color           _stroke;
+    private boolean         _expandCanvas;
+    private Vector2D        _offset;
+    private Vector2D        _size;
+
+    public Draw(int width, int height) {
+        this(new Image(width, height));
+        clear();
+    }
 
     public Draw(Vector2D dimensions) {
-        _backImage      = new Image(dimensions.x(), dimensions.y());
-        _g2D            = _backImage.graphics2D();
-        _fill           = EMPTY_COLOR;
-        _stroke         = EMPTY_COLOR;
-
-        setFont(new Draw.SimpleFont("Consolas", Font.PLAIN, 12));
-        setAntiAliasing(true);
+        this(dimensions.x(), dimensions.y());
+        clear();
     }
 
     public Draw(Image imageContext) {
-        _backImage      = imageContext;
-        _g2D            = _backImage.graphics2D();
+        _canvas         = imageContext;
+        _g2D            = _canvas.graphics2D();
         _fontMetrics    = _g2D.getFontMetrics();
         _fill           = EMPTY_COLOR;
         _stroke         = EMPTY_COLOR;
+        _offset         = new Vector2D(0, 0);
+        _size           = imageContext.size();
 
         setFont(new Draw.SimpleFont("Consolas", Font.PLAIN, 12));
         setAntiAliasing(true);
@@ -112,17 +118,20 @@ class Draw {
     //------- PROPERTIES -------//
     //////////////////////////////
 
-    /** Returns the width of the backing image */
-    public int              width()         { return _backImage.width(); }
+    /** Returns the width of the drawing context */
+    public int              width()         { return _size.x(); }
 
-    /** Returns the height of the backing image */
-    public int              height()        { return _backImage.height(); }
+    /** Returns the height of the drawing context */
+    public int              height()        { return _size.y(); }
 
-    /** Returns a Vector2D of the width and height */
-    public Vector2D         dimensions()    { return new Vector2D(width(), height()); }
+    /** Returns the dimensions of the drawing context */
+    public Vector2D         size()          { return _size.copy(); }
+
+    /** Returns the internal offset of the drawing context used against drawing operations */
+    public Vector2D         offset()        { return _offset.copy(); }
 
     /** Returns the backing image object */
-    public Image            backImage()     { return _backImage; }
+    public Image            canvas()        { return _canvas; }
 
     /** Returns the stored Graphics2D object. */
     public Graphics2D       g2D()           { return _g2D; }
@@ -223,9 +232,63 @@ class Draw {
         _fontMetrics = _g2D.getFontMetrics();
     }
 
+    /**  Set whether to expand canvas on drawing operations. If false, when you draw out of bounds of the backing image, the out of bounds operations
+     * would get cut off. If true, the image will be expanded when you draw out of bounds.
+     * @param expandCanvas  New expansion setting
+     */
+    public void setExpandCanvas(boolean expandCanvas) { _expandCanvas = expandCanvas; }
+
+    private void checkBounds(Vector2D... points) {
+        if (!_expandCanvas) { return; }
+
+        Vector2D currentSize    = _size.copy();
+        Vector2D currentOffset  = _offset.copy();
+        boolean recreateImage   = false;
+
+        for (Vector2D p: points) {
+            if (p.x() < -currentOffset.x) {
+                currentOffset.x = -p.x();
+                recreateImage = true;
+            }
+            if (p.y() < -currentOffset.y) {
+                currentOffset.y = -p.y();
+                recreateImage = true;
+            }
+            if (p.x() > currentSize.x) {
+                currentSize.x = p.x();
+                recreateImage = true;
+            }
+            if (p.y() > currentSize.y) {
+                currentSize.y = p.y();
+                recreateImage = true;
+            }
+        }
+
+        if (recreateImage) {
+            Image    oldImage   = _canvas;
+            Vector2D offsetDiff = currentOffset.sub(_offset);
+
+            _canvas = new Image(currentSize.add(currentOffset));
+            _g2D = _canvas.graphics2D();
+
+            oldImage.draw(_g2D, offsetDiff.x(), offsetDiff.y());
+
+            _offset = currentOffset;
+            _size = currentSize;
+            setFont(_font);
+        }
+    }
+
     /////////////////////////////////
     //------- SHAPE DRAWING -------//
     /////////////////////////////////
+
+    /** Clears the drawing context */
+    public void clear() {
+        _g2D.setComposite(AlphaComposite.Clear);
+        _g2D.fillRect(0, 0, _canvas.width(), _canvas.height());
+        _g2D.setComposite(AlphaComposite.SrcOver);
+    }
 
     /** Draws a line from ({x1, y1}) to ({x2, y2}). Color is set by stroke
      * @param x1    x-coordinate of first point
@@ -234,10 +297,7 @@ class Draw {
      * @param y2    y-coordinate of second point
      */
     public void line(int x1, int y1, int x2, int y2) {
-        if (_stroke != null) {
-            _g2D.setColor(_stroke);
-            _g2D.drawLine(x1, y1, x2, y2);
-        }
+        line(new Vector2D(x1, y1), new Vector2D(x2, y2));
     }
 
     /** Draws a line from {p1} to {p2}. Color is set by stroke
@@ -245,23 +305,14 @@ class Draw {
      * @param p2    Coordinate of second point
      */
     public void line(Vector2D p1, Vector2D p2) {
-        line(p1.x(), p1.y(), p2.x(), p2.y());
-    }
+        if (_expandCanvas) checkBounds(p1, p2);
 
-    /** Draws a polygon defined by a series of points. The outline is specified by stroke, the fill by fill. 
-     * @param x         series of x coordinates of the polygon. 
-     * @param y         series of y coordinates of the polygon.
-     * @param numPoints Number of points to use.
-     */
-    public void polygon(int[] x, int[] y, int numPoints) {
-        if (_fill != null) {
-            _g2D.setColor(_fill);
-            _g2D.fillPolygon(x, y, numPoints);
-        }
-        
         if (_stroke != null) {
             _g2D.setColor(_stroke);
-            _g2D.drawPolygon(x, y, numPoints);
+            _g2D.drawLine(p1.x()+offset().x(),
+                          p1.y()+offset().y(),
+                          p2.x()+offset().x(),
+                          p2.y()+offset().y());
         }
     }
 
@@ -269,15 +320,25 @@ class Draw {
      * @param points   Sequence of Vector2D objects 
      */
     public void polygon(Vector2D... points) {
+        if (_expandCanvas) checkBounds(points);
+
         int[] x_coord = new int[points.length];
         int[] y_coord = new int[points.length];
 
         for (int i=0; i<points.length; i++) {
-            x_coord[i] = points[i].x();
-            y_coord[i] = points[i].y();
+            x_coord[i] = points[i].x()+offset().x();
+            y_coord[i] = points[i].y()+offset().y();
         }
 
-        polygon(x_coord, y_coord, points.length);
+        if (_fill != null) {
+            _g2D.setColor(_fill);
+            _g2D.fillPolygon(x_coord, y_coord, points.length);
+        }
+        
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawPolygon(x_coord, y_coord, points.length);
+        }
     }
 
     /** Draws a rectangle with the bottom-left point at ({x}, {y}) with the dimensions ({width}, {height})
@@ -287,14 +348,7 @@ class Draw {
      * @param height    Height of rectangle
      */
     public void rect(int x, int y, int width, int height) {
-        if (_fill != null) {
-            _g2D.setColor(_fill);
-            _g2D.fillRect(x, y, width, height);
-        }
-        if (_stroke != null) {
-            _g2D.setColor(_stroke);
-            _g2D.drawRect(x, y, width, height);
-        }
+        rect(new Vector2D(x, y), new Vector2D(width, height));
     }
 
     /** Draws a rectangle with the bottom-left point at {pos} with the dimensions {dim}
@@ -302,7 +356,22 @@ class Draw {
      * @param dim   Dimensions of rectangle
      */
     public void rect(Vector2D pos, Vector2D dim) {
-        rect(pos.x(), pos.y(), dim.x(), dim.y());
+        if (_expandCanvas) checkBounds(pos, pos.add(dim));
+
+        if (_fill != null) {
+            _g2D.setColor(_fill);
+            _g2D.fillRect(pos.x()+offset().x(),
+                          pos.y()+offset().y(),
+                          dim.x(),
+                          dim.y());
+        }
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawRect(pos.x()+offset().x(),
+                          pos.y()+offset().y(),
+                          dim.x(),
+                          dim.y());
+        }
     }
 
     /** Draws an arc with the center point at ({x}, {y}) with the dimensions ({width}, {height}), between the angles {startAngle} and {endAngle}
@@ -314,14 +383,7 @@ class Draw {
      * @param endAngle      Angle to end drawing the arc
      */
     public void arc(int x, int y, int width, int height, int startAngle, int endAngle) {
-        if (_fill != null) {
-            _g2D.setColor(_fill);
-            _g2D.fillArc(x, y, width, height, startAngle, endAngle);
-        }
-        if (_stroke != null) {
-            _g2D.setColor(_stroke);
-            _g2D.drawArc(x, y, width, height, startAngle, endAngle);
-        }
+        arc(new Vector2D(x, y), new Vector2D(width, height), startAngle, endAngle);
     }
 
     /** Draws an arc with the center point at {pos} with the dimensions {dim}, between the angles {startAngle} and {endAngle}
@@ -331,7 +393,27 @@ class Draw {
      * @param endAngle      Angle to end drawing the arc
      */
     public void arc(Vector2D pos, Vector2D dim, int startAngle, int endAngle) {
-        arc(pos.x(), pos.y(), dim.x(), dim.y(), startAngle, endAngle);
+        if (_expandCanvas) checkBounds(pos.sub(dim.div(2)),
+                                       pos.add(dim.div(2)));
+
+        if (_fill != null) {
+            _g2D.setColor(_fill);
+            _g2D.fillArc(pos.x()+offset().x(),
+                         pos.y()+offset().y(),
+                         dim.x(),
+                         dim.y(),
+                         startAngle,
+                         endAngle);
+        }
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawArc(pos.x()+offset().x(),
+                         pos.y()+offset().y(),
+                         dim.x(),
+                         dim.y(),
+                         startAngle,
+                         endAngle);
+        }
     }
 
     /** Draws an oval with the bottom-left point at ({x}, {y}) with dimensions ({width}, {height})
@@ -341,14 +423,7 @@ class Draw {
      * @param height    Height of oval
      */
     public void oval(int x, int y, int width, int height) {
-        if (_fill != null) {
-            _g2D.setColor(_fill);
-            _g2D.fillOval(x, y, width, height);
-        }
-        if (_stroke != null) {
-            _g2D.setColor(_stroke);
-            _g2D.drawOval(x, y, width, height);
-        }
+        oval(new Vector2D(x, y), new Vector2D(width, height));
     }
 
     /** Draws an oval with the bottom-left point at {pos} with dimensions {dim}
@@ -356,7 +431,22 @@ class Draw {
      * @param dim   Dimensions of oval
      */
     public void oval(Vector2D pos, Vector2D dim) {
-        oval(pos.x(), pos.y(), dim.x(), dim.y());
+        if (_expandCanvas) checkBounds(pos, pos.add(dim));
+
+        if (_fill != null) {
+            _g2D.setColor(_fill);
+            _g2D.fillOval(pos.x()+offset().x(),
+                          pos.y()+offset().y(),
+                          dim.x(),
+                          dim.y());
+        }
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawOval(pos.x()+offset().x(),
+                          pos.y()+offset().y(),
+                          dim.x(),
+                          dim.y());
+        }
     }
 
      /** Draws an oval with the center point at ({x}, {y}) with radii ({radiusX}, {radiusY})
@@ -366,22 +456,31 @@ class Draw {
      * @param radiusY   y-radius of oval
      */
     public void ovalCentered(int x, int y, int radiusX, int radiusY) {
-        if (_fill != null) {
-            _g2D.setColor(_fill);
-            _g2D.fillOval(x-radiusX, y-radiusY, radiusX*2, radiusY*2);
-        }
-        if (_stroke != null) {
-            _g2D.setColor(_stroke);
-            _g2D.drawOval(x-radiusX, y-radiusY, radiusX*2, radiusY*2);
-        }
+        ovalCentered(new Vector2D(x, y), new Vector2D(radiusX, radiusY));
     }
 
     /** Draws an oval with the center point at {pos} with {dim} storing x and y radii
      * @param pos   Coordinate of center
-     * @param dim   Dimensions of oval
+     * @param dim   Dimensions of the x and y radii
      */
     public void ovalCentered(Vector2D pos, Vector2D dim) {
-        oval(pos.x(), pos.y(), dim.x(), dim.y());
+        if (_expandCanvas) checkBounds(pos.sub(dim.div(2)),
+                                       pos.add(dim.div(2)));
+
+        if (_fill != null) {
+            _g2D.setColor(_fill);
+            _g2D.fillOval(pos.x()-dim.x()+offset().x(),
+                          pos.y()-dim.y()+offset().y(),
+                          dim.x()*2,
+                          dim.y()*2);
+        }
+        if (_stroke != null) {
+            _g2D.setColor(_stroke);
+            _g2D.drawOval(pos.x()-dim.x()+offset().x(),
+                          pos.y()-dim.y()+offset().y(),
+                          dim.x()*2,
+                          dim.y()*2);
+        }
     }
 
     ////////////////////////////////
@@ -405,6 +504,7 @@ class Draw {
      * @param pos           Coordinate of bottom-left corner
      */
     public void text(String textToDraw, Vector2D pos) {
+        //TODO: checkBounds
         text(textToDraw, pos.x(), pos.y());
     }
     
@@ -446,6 +546,7 @@ class Draw {
      * @param pos           Coordinate of bottom-right corner
      */
     public void textRight(String textToDraw, Vector2D pos) {
+        //TODO: checkBounds
         textRight(textToDraw, pos.x(), pos.y());
     }
     
@@ -487,6 +588,7 @@ class Draw {
      * @param pos           Coordinate of center point
      */
     public void textCentered(String textToDraw, Vector2D pos) {
+        //TODO: checkBounds
         textCentered(textToDraw, pos.x(), pos.y());
     }
     
@@ -529,6 +631,7 @@ class Draw {
      * @param pos           Coordinate of bottom-left corner
      */
     public void image(Image imageToDraw, Vector2D pos) {
+        //TODO: checkBounds
         imageToDraw.draw(_g2D, pos.x(), pos.y());
     }
 
@@ -545,6 +648,7 @@ class Draw {
      * @param pos           Coordinate of center
      */
     public void imageCentered(Image imageToDraw, Vector2D pos) {
+        //TODO: checkBounds
         imageToDraw.drawCentered(_g2D, pos.x(), pos.y());
     }
 
@@ -562,6 +666,17 @@ class Draw {
      * @param pos           Coordinate of center
      */
     public void imageRotated(Image imageToDraw, Vector2D pos, double angle) {
+        //TODO: checkBounds
         imageToDraw.drawRotated(_g2D, pos.x(), pos.y(), angle);
+    }
+
+    /** Draws another Draw object onto the back image. Draw's the context's origin at ({x}, {y}). If the context has not been offset, this point will
+     * be the bottom-left corner of the context's backing image
+     * @param drawOther Draw object to render on this context
+     * @param x         x-coordinate to render the context's origin point
+     * @param y         y-coordinate to render the context's origin point
+     */
+    public void drawOthercontext(Draw drawContext, int x, int y) {
+        //TODO: Complete
     }
 }
