@@ -77,6 +77,7 @@ class Draw {
     }
 
     public static final Color EMPTY_COLOR = new Color(0, 0, 0, 0);
+    public static final Vector2D ORIGIN = new Vector2D(0, 0);
     
     private static final Map<_StrokeData, BasicStroke> _STROKE_CACHE = new HashMap<_StrokeData, BasicStroke>();
     private static final Map<Draw.SimpleFont, Font> _FONT_CACHE = new HashMap<Draw.SimpleFont, Font>();
