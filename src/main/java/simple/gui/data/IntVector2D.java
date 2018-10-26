@@ -128,6 +128,11 @@ public class IntVector2D implements ConstIntVector2D {
         _x = vec.x();
         _y = vec.y();
     }
+    /** Creates a copy of the vector toCopy */
+    public IntVector2D(ConstVector2D vec) {
+        _x = (int)Math.round(vec.x());
+        _y = (int)Math.round(vec.y());
+    }
 
     //////////////////////////////
     // ------ OPERATIONS ------ //

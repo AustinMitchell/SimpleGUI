@@ -128,6 +128,11 @@ public class Vector2D implements ConstVector2D {
         _x = vec.x();
         _y = vec.y();
     }
+    /** Creates a copy of the vector toCopy */
+    public Vector2D(ConstIntVector2D vec) {
+        _x = vec.x();
+        _y = vec.y();
+    }
 
     //////////////////////////////
     // ------ OPERATIONS ------ //
@@ -138,6 +143,9 @@ public class Vector2D implements ConstVector2D {
 
     /** Returns a ConstVector2D handle for the vector **/
     public ConstVector2D asConst() { return (ConstVector2D)this; }
+
+    /** Returns this vector as an IntVector2D */
+    public IntVector2D asIntVector2D() { return new IntVector2D(this); }
 
     /** [new vector] Binds the vector inside a box, whose bottom left corner and top right corner are defined by {p1} and {p2}. When called, this method will
      * adjust the x and y components of this vector to keep them within the bounding box.

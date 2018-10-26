@@ -49,6 +49,9 @@ public interface ConstVector2D {
     /** Returns a ConstVector2D handle for the vector **/
     public ConstVector2D asConst();
 
+    /** Returns this vector as an IntVector2D */
+    public IntVector2D asIntVector2D();
+
     /** [new vector] Binds the vector inside a box, whose bottom left corner and top right corner are defined by {p1} and {p2}. When called, this method will
      * adjust the x and y components of this vector to keep them within the bounding box.
      * @param p1   Lower left boundbox corner
