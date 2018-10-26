@@ -1,4 +1,7 @@
 package simple.gui;
+
+import simple.gui.data.*;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -96,7 +99,7 @@ public final class Image {
 	
     private BufferedImage   _image;            
     private String          _filename;                   
-    private Vector2D        _size;
+    private IntVector2D     _size;
     private Orientation     _orientation;
 
 
@@ -111,7 +114,7 @@ public final class Image {
     public int              height()        { return _size.y(); }
 
     /** Returns the dimensions of the image */
-    public Vector2D         size()          { return _size.copy(); }
+    public ConstIntVector2D size()          { return _size.asConst(); }
 
     /** Returns orientation of the image **/
     public Orientation      orientation()   { return _orientation; }
@@ -152,7 +155,7 @@ public final class Image {
         if (width < 0) { throw new IllegalArgumentException("width must be non-negative"); }
         if (height < 0) { throw new IllegalArgumentException("height must be non-negative"); }
 
-        _size        = new Vector2D(width, height);
+        _size        = new IntVector2D(width, height);
         _image       = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB); // set to TYPE_INT_ARGB to support transparency
         _filename    = width + "-by-" + height;
         _orientation = Orientation.UP;
@@ -161,13 +164,13 @@ public final class Image {
     /** Creates an empty image with a default filename with the width and height defined by {dimensions}. 
      * @param dimensions    Dimensions of new image
      * **/
-    public Image(Vector2D dimensions) {
+    public Image(ConstIntVector2D dimensions) {
         this(dimensions.x(), dimensions.y());
     }
 
     /** Creates an image using the same filename and color data from another image. **/
     public Image(Image image) {
-        _size        = new Vector2D(image._size);
+        _size        = new IntVector2D(image._size);
         _image       = new BufferedImage(_size.x(), _size.y(), BufferedImage.TYPE_INT_ARGB);
         _filename    = image.fileName();
         _orientation = image.orientation();
@@ -180,7 +183,7 @@ public final class Image {
      * @param copyImage If enabled, it will make a new BufferedImage by copying pixel data from
      * the original. Otherwise, it will use the same base object. **/
     public Image(BufferedImage image, boolean copyImage) {
-        _size = new Vector2D(image.getWidth(), image.getHeight()); 
+        _size = new IntVector2D(image.getWidth(), image.getHeight()); 
         
         if (copyImage) {
             _image = new BufferedImage(_size.x(), _size.y(), BufferedImage.TYPE_INT_ARGB);
@@ -199,7 +202,7 @@ public final class Image {
 	    	imageToCopy = new BufferedImage(temp.getWidth(), temp.getHeight(), BufferedImage.TYPE_INT_ARGB);
 	    	imageToCopy.createGraphics().drawImage(temp, 0, 0, null);
             
-            _size        = new Vector2D(imageToCopy.getWidth(), imageToCopy.getHeight());
+            _size        = new IntVector2D(imageToCopy.getWidth(), imageToCopy.getHeight());
 			_image       = new BufferedImage(_size.x(), _size.y(), BufferedImage.TYPE_INT_ARGB);
 			_filename    = _size.x() + "-by-" + _size.y();
 			_orientation = Orientation.UP;
@@ -230,7 +233,7 @@ public final class Image {
                 if (url == null) { url = new URL(_filename); }
                 _image = ImageIO.read(url);
             }
-            _size = new Vector2D(_image.getWidth(), _image.getHeight());
+            _size = new IntVector2D(_image.getWidth(), _image.getHeight());
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -253,7 +256,7 @@ public final class Image {
         if (_image == null) {
             throw new RuntimeException("Invalid image file: " + file);
         }
-        _size        = new Vector2D(_image.getWidth(), _image.getHeight());
+        _size        = new IntVector2D(_image.getWidth(), _image.getHeight());
         _filename    = file.getName();
         _orientation = Orientation.UP;
     }

@@ -3,6 +3,7 @@ package simple.gui;
 import javax.swing.*;
 
 import simple.gui.Draw;
+import simple.gui.data.*;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -46,7 +47,7 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
     
     private Color       _backgroundColor;
     private boolean     _isRunning;
-    private Vector2D    _dimensions;
+    private IntVector2D _dimensions;
     private int         _fps;
     private int         _delayTime;
     private JFrame      _frame;
@@ -55,28 +56,28 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
     private Graphics    _graphics;
         
     /** Returns the width of the window frame **/
-    public int      width()             { return _dimensions.x(); }
+    public int              width()             { return _dimensions.x(); }
 
     /** Returns the height of the window frame **/
-    public int      height()            { return _dimensions.y(); }
+    public int              height()            { return _dimensions.y(); }
 
     /** Returns the dimensions of the window frame */
-    public Vector2D dimensions()        { return _dimensions.copy(); }
+    public ConstIntVector2D dimensions()        { return _dimensions.asConst(); }
 
     /** Returns the target frames per second for the program **/
-    public int      fps()               { return _fps; }
+    public int              fps()               { return _fps; }
 
     /** Returns the target delay time for the program given the FPS **/
-    public int      delay()             { return _delayTime; }
+    public int              delay()             { return _delayTime; }
 
     /** Returns the current background color (color that each frame starts as) **/
-    public Color    backgroundColor()   { return _backgroundColor; }
+    public Color            backgroundColor()   { return _backgroundColor; }
 
     /** Returns the JFrame object for the window **/
-    public JFrame   jframe()            { return _frame; }
+    public JFrame           jframe()            { return _frame; }
 
     /** Returns the drawing context for the window */
-    public Draw     draw()              { return _draw; }
+    public Draw             draw()              { return _draw; }
 
 
 
@@ -97,7 +98,7 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
         super();
         _backgroundColor = new Color(180, 180, 180);
         _isRunning = false;
-        _dimensions = new Vector2D(width, height);
+        _dimensions = new IntVector2D(width, height);
         _fps = fps;
         _delayTime = 1000/fps;
         _frame = (JFrame) SwingUtilities.getWindowAncestor(this);
