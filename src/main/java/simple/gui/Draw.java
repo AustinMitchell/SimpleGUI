@@ -111,8 +111,7 @@ class Draw {
         _fill           = EMPTY_COLOR;
         _stroke         = EMPTY_COLOR;
         _offset         = new IntVector2D(0, 0);
-
-        _size.set(imageContext.size());
+        _size           = new IntVector2D(imageContext.size());
 
         setFont(new Draw.SimpleFont("Consolas", Font.PLAIN, 12));
         setAntiAliasing(true);
