@@ -21,5 +21,11 @@
             "command": "mvn -B compile",
             "group": "build"
         }
+        {
+            "label": "package",
+            "type": "shell",
+            "command": "mvn -B -X package",
+            "group": "build"
+        }
     ]
 }
