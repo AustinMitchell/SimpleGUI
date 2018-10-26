@@ -267,9 +267,9 @@ public final class Image {
     /** Returns a copy of an image object resized to new bounds. Scales pixels by deciding which pixel has the best claim (which pixel is closest
      * to the empty pixel upon resize). Does not perform any anti-aliasing. WARNING: If you shrink an image and set that image to it, the
      * old data is permanently lost.
-     * @param image			Image object to resize. 
-     * @param newWidth		New width to scale image to.
-     * @param newHeight		New height to scale image to. **/
+     * @param image         Image object to resize. 
+     * @param newWidth      New width to scale image to.
+     * @param newHeight     New height to scale image to. **/
     public static Image resize(Image image, int newWidth, int newHeight) {
         return image.resize(newWidth, newHeight);
     }
@@ -282,8 +282,8 @@ public final class Image {
     /** Returns a copy of the image resized to new bounds. Scales pixels by deciding which pixel has the best claim (which pixel is closest
      * to the empty pixel upon resize). Does not perform any anti-aliasing. WARNING: If you skrink the image and set this image to it, the
      * old data is permanently lost.
-     * @param width		New width to scale image to.
-     * @param height		New height to scale image to. **/
+     * @param width     New width to scale image to.
+     * @param height    New height to scale image to. **/
     public Image resize(int width, int height) {
         Image newImage = new Image(width, height);
         newImage.setOrientation(_orientation);
