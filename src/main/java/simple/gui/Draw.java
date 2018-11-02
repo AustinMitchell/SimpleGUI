@@ -13,7 +13,7 @@ import java.awt.Font;
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 
-class Draw {
+public class Draw {
     private static class _StrokeData {
         public int      thickness;
         public boolean  isRound;
