@@ -1,8 +1,10 @@
-package simple.gui;
+package test.simple.gui;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+
+import simple.gui.Draw;
 
 public class DrawTest {
     @Test
