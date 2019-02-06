@@ -2,8 +2,8 @@ package simple.gui;
 
 import javax.swing.*;
 
-import simple.gui.Draw;
 import simple.gui.data.*;
+import simple.gui.graphics.Draw;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -32,29 +32,27 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
             setVisible(true);
         }
     }
-    
+
     /** Maximum width the window can be for you screen size **/
     public static final int MAXWIDTH = (int)java.awt.Toolkit.getDefaultToolkit().getScreenSize().getWidth();
     /** Maximum height the window can be for your sceen size **/
     public static final int MAXHEIGHT = (int)java.awt.Toolkit.getDefaultToolkit().getScreenSize().getHeight();
-    
+
     public static void start(SimpleGUIApp mainProgram, String name, boolean isUndecorated) {
         mainProgram.setFrame(new GUIRunWindow(mainProgram, name, isUndecorated)); 
     }
     public static void start(SimpleGUIApp mainProgram, String name) {
         mainProgram.setFrame(new GUIRunWindow(mainProgram, name, false)); 
     }
-    
+
     private Color       _backgroundColor;
     private boolean     _isRunning;
     private IntVector2D _dimensions;
     private int         _fps;
     private int         _delayTime;
     private JFrame      _frame;
-    private Thread      _thread;
     private Draw        _draw;
-    private Graphics    _graphics;
-        
+
     /** Returns the width of the window frame **/
     public int              width()             { return _dimensions.x(); }
 
@@ -83,16 +81,16 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
 
 
     private void setFrame(JFrame frame_) { _frame = frame_; }
-    
+
     /** Sets the background color to the given color **/
-    public void setBackgroundColor(Color c) { _backgroundColor = c; }
-    
+    public final void setBackgroundColor(Color c) { _backgroundColor = c; }
+
     /** Signals the program to terminate **/
-    public void quit() { _isRunning = false; }
+    public final void quit() { _isRunning = false; }
 
     /** Minimizes the window into the explorer bar **/
-    public void minimize() { _frame.setState(Frame.ICONIFIED); }
-    
+    public final void minimize() { _frame.setState(Frame.ICONIFIED); }
+
     /** Creates a new SimpleGUIApp with a given width, height and target frames per second **/
     public SimpleGUIApp(int width, int height, int fps) {
         super();
@@ -102,61 +100,68 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
         _fps = fps;
         _delayTime = 1000/fps;
         _frame = (JFrame) SwingUtilities.getWindowAncestor(this);
-        _graphics = super.getGraphics();
         
+        addMouseListener(Input.getListener());
+        addMouseMotionListener(Input.getListener());
+        addMouseWheelListener(Input.getListener());
+        addKeyListener(Input.getListener());
+
         setPreferredSize(new Dimension(width, height));
         setFocusable(true);
         requestFocus();
     }
-    
+
     private void initGraphics() {
+        //_graphics = (Graphics2D)super.getGraphics();
         _draw = new Draw(_dimensions);
         _isRunning = true;
     }
-    
+
     /** Method required for the Runnable Interface; Contains the program loop **/
-    public void run() {
+    @Override
+    public final void run() {
         initGraphics();
         setup();
         while(_isRunning) {
             Input.update();
             loop();
+            updateView();
         }
         System.exit(0);
     }
-    
+
     /** Method called before the loop begins; Set up variables here, not in your contructor **/
     public abstract void setup();
     /** Method called each frame **/
     public abstract void loop();
-    
+
     /** Draws whatever is on the DrawModule image buffer to the program window **/
-    protected void DrawToScreen() {
-        _graphics.drawImage(_draw.canvas().bufferedImage(), 0, 0, null);
+    private void DrawToScreen() {
+        Graphics graphics = super.getGraphics();
+        graphics.drawImage(_draw.canvas().bufferedImage(), 0, 0, null);
+        graphics.dispose();
     }
     /** Covers the DrawModule image buffer with the background color, effectively clearing it **/
-    protected void cls() {
+    private void cls() {
         _draw.setFill(_backgroundColor);
         _draw.setStroke(null);
         _draw.rect(Draw.ORIGIN, _dimensions);
     }
     /** Calls DrawToScreen(), Timer.correctedDelay() with your target FPS in mind and cls(). This is the most convenient way to update the screen **/
-    protected void updateView() {
+    private void updateView() {
         DrawToScreen();
         Timer.correctedDelay(_delayTime);
         cls();
     }
     
     /** Method required for the Runnable interface. **/
-    public void addNotify() {
+    public final void addNotify() {
         super.addNotify();
-        if(_thread == null) {
-            _thread = new Thread(this);
-            addMouseListener(Input.getListener());
-            addMouseMotionListener(Input.getListener());
-            addMouseWheelListener(Input.getListener());
-            addKeyListener(Input.getListener());
-            _thread.start();
-        }
+        Thread thread = new Thread(this);
+        addMouseListener(Input.getListener());
+        addMouseMotionListener(Input.getListener());
+        addMouseWheelListener(Input.getListener());
+        addKeyListener(Input.getListener());
+        thread.start();
     }
 }

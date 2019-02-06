@@ -117,8 +117,13 @@ public class IntVector2D implements ConstIntVector2D {
     // ------ CONSTRUCTORS ------ //
     ////////////////////////////////
 
+    /** Creates a new vector [x, x] from an integer */
+    public IntVector2D(int x) {
+        _x = x;
+        _y = x;
+    }
 
-    /** Creates a new vector [x, y] from doubles */
+    /** Creates a new vector [x, y] from integers */
     public IntVector2D(int x, int y) {
         _x = x;
         _y = y;

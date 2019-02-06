@@ -1,4 +1,4 @@
-package simple.gui;
+package simple.gui.graphics;
 
 import simple.gui.data.*;
 
@@ -94,16 +94,30 @@ public class Draw {
     private IntVector2D     _offset;
     private IntVector2D     _size;
 
+    /**
+     * Constructs a new Draw object with the given dimensions
+     * @param width     Width of Draw object
+     * @param height    Height of Draw object
+     */
     public Draw(int width, int height) {
         this(new Image(width, height));
         clear();
     }
 
+    /**
+     * Constructs a new Draw object with the given dimensions
+     * @param dimensions    ConstIntVector2D to base width and height from
+     */
     public Draw(ConstIntVector2D dimensions) {
         this(dimensions.x(), dimensions.y());
         clear();
     }
 
+    /**
+     * Construct a new Draw object from image context. Draw operations will appear onto the given image. Note that if the 
+     * draw object is resizeable, then if resized it will create a new image context. It's recommended resizing is disabled
+     * @param imageContext      Image context to draw onto
+     */
     public Draw(Image imageContext) {
         _canvas         = imageContext;
         _g2D            = _canvas.graphics2D();
@@ -113,6 +127,7 @@ public class Draw {
         _offset         = new IntVector2D(0, 0);
         _size           = new IntVector2D(imageContext.size());
 
+        setExpandCanvas(false);
         setFont(new Draw.SimpleFont("Consolas", Font.PLAIN, 12));
         setAntiAliasing(true);
     }
@@ -241,14 +256,14 @@ public class Draw {
      */
     public void setExpandCanvas(boolean expandCanvas) { _expandCanvas = expandCanvas; }
 
-    private void checkBounds(IntVector2D... points) {
+    private void checkBounds(ConstIntVector2D... points) {
         if (!_expandCanvas) { return; }
 
         IntVector2D currentSize    = _size.copy();
         IntVector2D currentOffset  = _offset.copy();
         boolean recreateImage   = false;
 
-        for (IntVector2D p: points) {
+        for (ConstIntVector2D p: points) {
             if (p.x() < -currentOffset.x()) {
                 currentOffset.setX(p.x());
                 recreateImage = true;
@@ -289,7 +304,7 @@ public class Draw {
     /** Clears the drawing context */
     public void clear() {
         _g2D.setComposite(AlphaComposite.Clear);
-        _g2D.fillRect(0, 0, _canvas.width(), _canvas.height());
+        _g2D.fillRect(0, 0, _size.x(), _size.y());
         _g2D.setComposite(AlphaComposite.SrcOver);
     }
 
@@ -307,7 +322,7 @@ public class Draw {
      * @param p1    Coordinate of first point
      * @param p2    Coordinate of second point
      */
-    public void line(IntVector2D p1, IntVector2D p2) {
+    public void line(ConstIntVector2D p1, ConstIntVector2D p2) {
         if (_expandCanvas) checkBounds(p1, p2);
 
         if (_stroke != null) {
@@ -322,7 +337,7 @@ public class Draw {
     /** Draws a polygon defined by a series of points. The outline is specified by stroke, the fill by fill. 
      * @param points   Sequence of Vector2D objects 
      */
-    public void polygon(IntVector2D... points) {
+    public void polygon(ConstIntVector2D... points) {
         if (_expandCanvas) checkBounds(points);
 
         int[] x_coord = new int[points.length];
@@ -358,7 +373,7 @@ public class Draw {
      * @param pos   Coordinate of bottom-left corner
      * @param dim   Dimensions of rectangle
      */
-    public void rect(IntVector2D pos, IntVector2D dim) {
+    public void rect(ConstIntVector2D pos, ConstIntVector2D dim) {
         if (_expandCanvas) checkBounds(pos, pos.add(dim));
 
         if (_fill != null) {
@@ -395,7 +410,7 @@ public class Draw {
      * @param startAngle    Angle to begin drawing the arc
      * @param endAngle      Angle to end drawing the arc
      */
-    public void arc(IntVector2D pos, IntVector2D dim, int startAngle, int endAngle) {
+    public void arc(ConstIntVector2D pos, ConstIntVector2D dim, int startAngle, int endAngle) {
         if (_expandCanvas) checkBounds(pos.sub(dim.div(2)),
                                        pos.add(dim.div(2)));
 
@@ -433,7 +448,7 @@ public class Draw {
      * @param pos   Coordinate of bottom-left point
      * @param dim   Dimensions of oval
      */
-    public void oval(IntVector2D pos, IntVector2D dim) {
+    public void oval(ConstIntVector2D pos, ConstIntVector2D dim) {
         if (_expandCanvas) checkBounds(pos, pos.add(dim));
 
         if (_fill != null) {
@@ -466,7 +481,7 @@ public class Draw {
      * @param pos   Coordinate of center
      * @param dim   Dimensions of the x and y radii
      */
-    public void ovalCentered(IntVector2D pos, IntVector2D dim) {
+    public void ovalCentered(ConstIntVector2D pos, ConstIntVector2D dim) {
         if (_expandCanvas) checkBounds(pos.sub(dim.div(2)),
                                        pos.add(dim.div(2)));
 
@@ -506,7 +521,7 @@ public class Draw {
      * @param textToDraw    Text to draw
      * @param pos           Coordinate of bottom-left corner
      */
-    public void text(String textToDraw, IntVector2D pos) {
+    public void text(String textToDraw, ConstIntVector2D pos) {
         //TODO: checkBounds
         text(textToDraw, pos.x(), pos.y());
     }
@@ -527,7 +542,7 @@ public class Draw {
      * @param pos           Coordinate of bottom-left corner
      * @param font          Font to set drawing context to
      */
-    public void text(String textToDraw, IntVector2D pos, SimpleFont font) {
+    public void text(String textToDraw, ConstIntVector2D pos, SimpleFont font) {
         setFont(font);
         text(textToDraw, pos.x(), pos.y());
     }
@@ -569,7 +584,7 @@ public class Draw {
      * @param pos           Coordinate of bottom-right corner
      * @param font          Font to set drawing context to
      */
-    public void textRight(String textToDraw, IntVector2D pos, SimpleFont font) {
+    public void textRight(String textToDraw, ConstIntVector2D pos, SimpleFont font) {
         setFont(font);
         textRight(textToDraw, pos.x(), pos.y());
     }
@@ -590,7 +605,7 @@ public class Draw {
      * @param textToDraw    Text to draw
      * @param pos           Coordinate of center point
      */
-    public void textCentered(String textToDraw, IntVector2D pos) {
+    public void textCentered(String textToDraw, ConstIntVector2D pos) {
         //TODO: checkBounds
         textCentered(textToDraw, pos.x(), pos.y());
     }
@@ -611,7 +626,7 @@ public class Draw {
      * @param pos           Coordinate of center point
      * @param font          Font to set drawing context to
      */
-    public void textCentered(String textToDraw, IntVector2D pos, SimpleFont font) {
+    public void textCentered(String textToDraw, ConstIntVector2D pos, SimpleFont font) {
         setFont(font);
         textCentered(textToDraw, pos.x(), pos.y());
     }
@@ -633,7 +648,7 @@ public class Draw {
      * @param imageToDraw   Image to draw
      * @param pos           Coordinate of bottom-left corner
      */
-    public void image(Image imageToDraw, IntVector2D pos) {
+    public void image(Image imageToDraw, ConstIntVector2D pos) {
         //TODO: checkBounds
         imageToDraw.draw(_g2D, pos.x(), pos.y());
     }
@@ -650,7 +665,7 @@ public class Draw {
      * @param imageToDraw   Image to draw
      * @param pos           Coordinate of center
      */
-    public void imageCentered(Image imageToDraw, IntVector2D pos) {
+    public void imageCentered(Image imageToDraw, ConstIntVector2D pos) {
         //TODO: checkBounds
         imageToDraw.drawCentered(_g2D, pos.x(), pos.y());
     }
@@ -668,7 +683,7 @@ public class Draw {
      * @param imageToDraw   Image to draw
      * @param pos           Coordinate of center
      */
-    public void imageRotated(Image imageToDraw, IntVector2D pos, double angle) {
+    public void imageRotated(Image imageToDraw, ConstIntVector2D pos, double angle) {
         //TODO: checkBounds
         imageToDraw.drawRotated(_g2D, pos.x(), pos.y(), angle);
     }
@@ -680,6 +695,16 @@ public class Draw {
      * @param y         y-coordinate to render the context's origin point
      */
     public void drawOthercontext(Draw drawContext, int x, int y) {
-        //TODO: Complete
+        drawOthercontext(drawContext, new IntVector2D(x, y));
+    }
+    
+    /** Draws another Draw object onto the back image. Draw's the context's origin at ({x}, {y}). If the context has not been offset, this point will
+     * be the bottom-left corner of the context's backing image
+     * @param drawOther Draw object to render on this context
+     * @param x         x-coordinate to render the context's origin point
+     * @param y         y-coordinate to render the context's origin point
+     */
+    public void drawOthercontext(Draw drawContext, ConstIntVector2D pos) {
+        image(drawContext.canvas(), pos);
     }
 }

@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import simple.gui.Draw;
+import simple.gui.graphics.Draw;
 
 public class DrawTest {
     @Test

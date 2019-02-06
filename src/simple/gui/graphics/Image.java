@@ -1,4 +1,4 @@
-package simple.gui;
+package simple.gui.graphics;
 
 import simple.gui.data.*;
 
