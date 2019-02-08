@@ -33,9 +33,9 @@ public class Input {
 
         public void mouseWheelMoved (MouseWheelEvent e) { _BUFFERED_NOTCHES = e.getWheelRotation(); }
         
-        public void mouseClicked    (MouseEvent e) {}
-        public void mouseEntered    (MouseEvent e) {}
-        public void mouseExited     (MouseEvent e) {}
+        public void mouseClicked    (MouseEvent e) { /* Event is handled with clicking and positions states */ }
+        public void mouseEntered    (MouseEvent e) { /* Event is handled with clicking and positions states */ }
+        public void mouseExited     (MouseEvent e) { /* Event is handled with clicking and positions states */ }
     }
 
     private static IntVector2D      _POS                    = new IntVector2D(0, 0);
@@ -49,10 +49,10 @@ public class Input {
     private static boolean[]        _KEY_CODES              = new boolean[65536];
     private static boolean[]        _KEY_CHARS              = new boolean[65536];
     
-    private static Queue<Integer>   _CODE_BUFFER            = new LinkedList<Integer>();
-    private static Queue<Character> _CHAR_BUFFER            = new LinkedList<Character>();
-    private static Queue<Integer>   _CODE_RELEASED_BUFFER   = new LinkedList<Integer>();
-    private static Queue<Character> _CHAR_RELEASED_BUFFER   = new LinkedList<Character>();
+    private static Queue<Integer>   _CODE_BUFFER            = new LinkedList<>();
+    private static Queue<Character> _CHAR_BUFFER            = new LinkedList<>();
+    private static Queue<Integer>   _CODE_RELEASED_BUFFER   = new LinkedList<>();
+    private static Queue<Character> _CHAR_RELEASED_BUFFER   = new LinkedList<>();
     private static char             _CURRENT_CHAR           = 0;
     private static int              _CURRENT_CODE           = 0;
     private static char             _CURRENT_RELEASED_CHAR  = 0;
@@ -80,13 +80,13 @@ public class Input {
     public static int mouseShiftY() { return _POS.sub(_OLD_POS).y(); }
 
     /** Returns the mouse position */
-    public static ConstIntVector2D mouse()      { return _POS.asConst(); }
+    public static ConstIntVector2D mouse()      { return _POS; }
 
     /** Returns the mouse position of the previous frame */
-    public static ConstIntVector2D mouseOld()   { return _OLD_POS.asConst(); }
+    public static ConstIntVector2D mouseOld()   { return _OLD_POS; }
 
     /** Returns the a vector of the shift between the mouse positions of this frame and last frame */
-    public static ConstIntVector2D mouseShift() { return _POS_SHIFT.asConst(); }
+    public static ConstIntVector2D mouseShift() { return _POS_SHIFT; }
 
     /** Returns the number of notches the mouse wheel changes by. A negative value is wheeldown, positive is wheelup */
     public static int       mouseWheelNotches() { return _MOUSE_NOTCHES; }
@@ -99,10 +99,10 @@ public class Input {
     
     
     /** Returns whether the given key is pressed, using given keycode **/
-    public static boolean   keyDown(int key)    { return (key>=0 && key<65536) ? (_KEY_CODES[key]) : false; }
+    public static boolean   keyDown(int key)    { return (key>=0 && key<65536) && (_KEY_CODES[key]); }
 
     /** Returns whether the given key is pressed, using given character**/
-    public static boolean   keyDown(char key)   { return (key>=0 && key<65536) ? (_KEY_CHARS[key]) : false; }
+    public static boolean   keyDown(char key)   { return (key>=0 && key<65536) && (_KEY_CHARS[key]); }
 
     /** Returns the keycode of the first key in the typing buffer **/
     public static int       getCode()           { return _CURRENT_CODE; }

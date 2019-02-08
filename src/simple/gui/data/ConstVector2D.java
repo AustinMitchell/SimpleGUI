@@ -46,9 +46,6 @@ public interface ConstVector2D {
      /** Returns a vector with the same component values **/
     public Vector2D copy();
 
-    /** Returns a ConstVector2D handle for the vector **/
-    public ConstVector2D asConst();
-
     /** Returns this vector as an IntVector2D */
     public IntVector2D asIntVector2D();
 

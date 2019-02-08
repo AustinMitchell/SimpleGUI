@@ -7,6 +7,7 @@ import java.awt.RenderingHints;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
 import java.awt.FontMetrics;
 import java.awt.Color;
 import java.awt.Font;
@@ -14,19 +15,36 @@ import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 
 public class Draw {
+
+    ////////////////////////////////////////////////////////////////
+    // ------------------------- STATICS ------------------------ //
+    ////////////////////////////////////////////////////////////////
+
     private static class _StrokeData {
-        public int      thickness;
-        public boolean  isRound;
+        private int     _thickness;
+        private boolean _isRound;
 
         public _StrokeData(int thickness, boolean isRound) {
-            this.thickness  = thickness;
-            this.isRound    = isRound;
+            this._thickness  = thickness;
+            this._isRound    = isRound;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(thickness, isRound);
+            return Objects.hash(_thickness, _isRound);
         }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof _StrokeData)) {
+                return false;
+            }
+            
+            _StrokeData sd = (_StrokeData)obj;
+            
+            return (_thickness == sd._thickness) && (_isRound == sd._isRound);
+        }
+        
     }
 
     /** Stores font data for caching use. */
@@ -49,20 +67,31 @@ public class Draw {
         public int hashCode() {
             return Objects.hash(_name, _style, _size);
         }
+        
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof SimpleFont)) {
+                return false;
+            }
+            
+            SimpleFont sf = (SimpleFont)obj;
+            
+            return (this._name.equals(sf._name)) && (this._style == sf._style) && (this._size == sf._style);
+        }
     }
 
     /** Multiplies each value in a Color object by a constant.
-     * @param c				Base color
-     * @param scale			Constant scalar value **/
+     * @param c             Base color
+     * @param scale         Constant scalar value **/
     public static Color scaleColor(Color c, float scale) {
         if (c==null) return null;
         return new Color((int)(c.getRed()*scale), (int)(c.getGreen()*scale), (int)(c.getBlue()*scale));
     }
     /** Multiplies each value in a Color object by a constant. Each color is multiplied by a different constant.
-     * @param c				Base color
-     * @param rscale		Constant scalar value for red
-     * @param gscale		Constant scalar value for green
-     * @param bscale		Constant scalar value for blue**/
+     * @param c             Base color
+     * @param rscale        Constant scalar value for red
+     * @param gscale        Constant scalar value for green
+     * @param bscale        Constant scalar value for blue**/
     public static Color scaleColor(Color c, float rscale, float gscale, float bscale) {
         if (c==null) return null;
         return new Color(c.getRed()*rscale, c.getGreen()*gscale, c.getBlue()*bscale);
@@ -80,9 +109,14 @@ public class Draw {
 
     public static final Color EMPTY_COLOR = new Color(0, 0, 0, 0);
     public static final IntVector2D ORIGIN = new IntVector2D(0, 0);
-    
-    private static final Map<_StrokeData, BasicStroke> _STROKE_CACHE = new HashMap<_StrokeData, BasicStroke>();
-    private static final Map<Draw.SimpleFont, Font> _FONT_CACHE = new HashMap<Draw.SimpleFont, Font>();
+
+    private static final Map<_StrokeData, BasicStroke> _STROKE_CACHE = new HashMap<>();
+    private static final Map<Draw.SimpleFont, Font> _FONT_CACHE = new HashMap<>();
+
+
+    ////////////////////////////////////////////////////////////////
+    // ------------------------- FIELDS ------------------------- //
+    ////////////////////////////////////////////////////////////////
 
     private Image           _canvas;
     private Graphics2D      _g2D;  
@@ -93,6 +127,137 @@ public class Draw {
     private boolean         _expandCanvas;
     private IntVector2D     _offset;
     private IntVector2D     _size;
+
+
+    ////////////////////////////////////////////////////////////////
+    // ----------------------- PROPERTIES ----------------------- //
+    ////////////////////////////////////////////////////////////////
+
+    /** Returns the width of the drawing context */
+    public int              width()         { return _size.x(); }
+
+    /** Returns the height of the drawing context */
+    public int              height()        { return _size.y(); }
+
+    /** Returns the dimensions of the drawing context */
+    public ConstIntVector2D size()          { return _size; }
+
+    /** Returns the internal offset of the drawing context used against drawing operations */
+    public ConstIntVector2D offset()        { return _offset; }
+
+    /** Returns the backing image object */
+    public Image            canvas()        { return _canvas; }
+
+    /** Returns the stored Graphics2D object. */
+    public Graphics2D       g2D()           { return _g2D; }
+
+    /** Returns the current text drawing font*/
+    public Draw.SimpleFont  font()          { return _font; }
+
+    /** Returns a FontMetrics object from the stored Graphics2D object's current font. */
+    public FontMetrics      fontMetrics()   { return _fontMetrics; }
+
+    /** Returns the stored fill color */
+    public Color            fill()          { return _fill; }
+
+    /** Returns the stored stroke color */
+    public Color            stroke()        { return _stroke; }
+
+
+    ////////////////////////////////////////////////////////////////
+    // ------------------------- SETTERS ------------------------ //
+    ////////////////////////////////////////////////////////////////
+
+    /**
+     * Sets whether to render text with anti-aliasing enabled.
+     * @param antiAlias
+     */
+    public void setAntiAliasing(boolean antiAlias) {
+        if (antiAlias) {
+            _g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
+        } else {
+            _g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+        }
+    }
+
+    /** Sets the drawing fill color. 
+     * @param fill      New color to use for the fill 
+     */
+    public void setFill(Color fill) { _fill = fill; }
+
+    /** Sets the drawing stroke color. Stroke is used for the borders of shapes as well as for rendering text. This will set
+     * the stroke thickness to 1.
+     * @param stroke    New color to use for the stroke
+     */
+    public void setStroke(Color stroke) { setStroke(stroke, 1); }
+
+    /** Sets the drawing stroke color. Stroke is used for the borders of shapes as well as for rendering text.
+     * @param stroke    New color to use for the stroke
+     * @param thickness Thickness value for the stroke on drawing
+     */
+    public void setStroke(Color stroke, int thickness) { _setStroke(stroke, thickness); }
+
+    /** Sets the drawing stroke color and makes the ends of the stroke round. Stroke is used for the borders of shapes as well as for rendering text.
+     * @param stroke    New color to use for the stroke
+     * @param thickness Thickness value for the stroke on drawing
+     */
+    public void setStrokeRound(Color stroke, int thickness) { _setStrokeRound(stroke, thickness); }
+
+    // Retrieves a stroke object from the cache or adds to it, then sets the stroke
+    private void _setStroke(Color stroke, int thickness) {
+        _StrokeData sd = new _StrokeData(thickness, false);
+        BasicStroke bs;
+        if (_STROKE_CACHE.containsKey(sd)) {
+            bs = _STROKE_CACHE.get(sd);
+        } else {
+            bs = new BasicStroke(thickness);
+            _STROKE_CACHE.put(sd, bs);
+        }
+        _g2D.setStroke(bs);
+        _stroke = stroke;
+    }
+    // Retrieves a stroke object from the cache or adds to it, then sets the stroke
+    private void _setStrokeRound(Color stroke, int thickness) {
+        _StrokeData sd = new _StrokeData(thickness, true);
+        BasicStroke bs;
+        if (_STROKE_CACHE.containsKey(sd)) {
+            bs = _STROKE_CACHE.get(sd);
+        } else {
+            bs = new BasicStroke(thickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+            _STROKE_CACHE.put(sd, bs);
+        }
+        _g2D.setStroke(bs);
+        _stroke = stroke;
+    }
+
+    /** Set the font to use for text drawing operations
+     * @param font  Draw.SimpleFont object
+     */
+    public void setFont(Draw.SimpleFont font) { 
+        Font awtFont;
+
+        if (_FONT_CACHE.containsKey(font)) {
+            awtFont = _FONT_CACHE.get(font);
+        } else {
+            awtFont = new Font(font._name, font._size, font._style);
+            _FONT_CACHE.put(font, awtFont);
+        }
+
+        _font = font;
+        _g2D.setFont(awtFont);
+        _fontMetrics = _g2D.getFontMetrics();
+    }
+
+    /**  Set whether to expand canvas on drawing operations. If false, when you draw out of bounds of the backing image, the out of bounds operations
+     * would get cut off. If true, the image will be expanded when you draw out of bounds.
+     * @param expandCanvas  New expansion setting
+     */
+    public void setExpandCanvas(boolean expandCanvas) { _expandCanvas = expandCanvas; }
+
+
+    ////////////////////////////////////////////////////////////////
+    // ---------------------- CONSTRUCTORS ---------------------- //
+    ////////////////////////////////////////////////////////////////
 
     /**
      * Constructs a new Draw object with the given dimensions
@@ -132,129 +297,17 @@ public class Draw {
         setAntiAliasing(true);
     }
 
-    //////////////////////////////
-    //------- PROPERTIES -------//
-    //////////////////////////////
 
-    /** Returns the width of the drawing context */
-    public int              width()         { return _size.x(); }
+    ////////////////////////////////////////////////////////////////
+    // ------------------------ OVERRIDES ----------------------- //
+    ////////////////////////////////////////////////////////////////
 
-    /** Returns the height of the drawing context */
-    public int              height()        { return _size.y(); }
 
-    /** Returns the dimensions of the drawing context */
-    public ConstIntVector2D size()          { return _size.asConst(); }
 
-    /** Returns the internal offset of the drawing context used against drawing operations */
-    public ConstIntVector2D offset()        { return _offset.asConst(); }
 
-    /** Returns the backing image object */
-    public Image            canvas()        { return _canvas; }
-
-    /** Returns the stored Graphics2D object. */
-    public Graphics2D       g2D()           { return _g2D; }
-
-    /** Returns the current text drawing font*/
-    public Draw.SimpleFont  font()          { return _font; }
-
-    /** Returns a FontMetrics object from the stored Graphics2D object's current font. */
-    public FontMetrics      fontMetrics()   { return _fontMetrics; }
-
-    /** Returns the stored fill color */
-    public Color            fill()          { return _fill; }
-
-    /** Returns the stored stroke color */
-    public Color            stroke()        { return _stroke; }
-    
-    ///////////////////////////
-    //------- SETTERS -------//
-    ///////////////////////////
-
-    /**
-     * Sets whether to render text with anti-aliasing enabled.
-     * @param antiAlias
-     */
-    public void setAntiAliasing(boolean antiAlias) {
-        if (antiAlias) {
-            _g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_GASP);
-        } else {
-            _g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-        }
-    }
-
-    /** Sets the drawing fill color. 
-     * @param fill      New color to use for the fill 
-     */
-    public void setFill(Color fill) { _fill = fill; }
-
-    /** Sets the drawing stroke color. Stroke is used for the borders of shapes as well as for rendering text. This will set
-     * the stroke thickness to 1.
-     * @param stroke    New color to use for the stroke
-     */
-    public void setStroke(Color stroke) { setStroke(stroke, 1); }
-
-    /** Sets the drawing stroke color. Stroke is used for the borders of shapes as well as for rendering text.
-     * @param stroke    New color to use for the stroke
-     * @param thickness Thickness value for the stroke on drawing
-     */
-    public void setStroke(Color stroke, int thickness) { _setStroke(stroke, thickness); }
-
-    /** Sets the drawing stroke color and makes the ends of the stroke round. Stroke is used for the borders of shapes as well as for rendering text.
-     * @param stroke    New color to use for the stroke
-     * @param thickness Thickness value for the stroke on drawing
-     */
-    public void setStrokeRound(Color stroke, int thickness) { _setStrokeRound(stroke, thickness); }
-        
-    // Retrieves a stroke object from the cache or adds to it, then sets the stroke
-    private void _setStroke(Color stroke, int thickness) {
-        _StrokeData sd = new _StrokeData(thickness, false);
-        BasicStroke bs;
-        if (_STROKE_CACHE.containsKey(sd)) {
-            bs = _STROKE_CACHE.get(sd);
-        } else {
-            bs = new BasicStroke(thickness);
-            _STROKE_CACHE.put(sd, bs);
-        }
-        _g2D.setStroke(bs);
-        _stroke = stroke;
-    }
-    // Retrieves a stroke object from the cache or adds to it, then sets the stroke
-    private void _setStrokeRound(Color stroke, int thickness) {
-        _StrokeData sd = new _StrokeData(thickness, true);
-        BasicStroke bs;
-        if (_STROKE_CACHE.containsKey(sd)) {
-            bs = _STROKE_CACHE.get(sd);
-        } else {
-            bs = new BasicStroke(thickness, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-            _STROKE_CACHE.put(sd, bs);
-        }
-        _g2D.setStroke(bs);
-        _stroke = stroke;
-    }
-
-    /** Set the font to use for text drawing operations
-     * @param font  Draw.SimpleFont object
-     */
-    public void setFont(Draw.SimpleFont font) { 
-        Font awtFont;
-        
-        if (_FONT_CACHE.containsKey(font)) {
-            awtFont = _FONT_CACHE.get(font);
-        } else {
-            awtFont = new Font(font._name, font._size, font._style);
-            _FONT_CACHE.put(font, awtFont);
-        }
-
-        _font = font;
-        _g2D.setFont(awtFont);
-        _fontMetrics = _g2D.getFontMetrics();
-    }
-
-    /**  Set whether to expand canvas on drawing operations. If false, when you draw out of bounds of the backing image, the out of bounds operations
-     * would get cut off. If true, the image will be expanded when you draw out of bounds.
-     * @param expandCanvas  New expansion setting
-     */
-    public void setExpandCanvas(boolean expandCanvas) { _expandCanvas = expandCanvas; }
+    ////////////////////////////////////////////////////////////////
+    // ------------------------- METHODS ------------------------ //
+    ////////////////////////////////////////////////////////////////
 
     private void checkBounds(ConstIntVector2D... points) {
         if (!_expandCanvas) { return; }
@@ -297,9 +350,8 @@ public class Draw {
         }
     }
 
-    /////////////////////////////////
-    //------- SHAPE DRAWING -------//
-    /////////////////////////////////
+    /* ========================================================== */
+    /* ======================  PRIMITIVES  ====================== */
 
     /** Clears the drawing context */
     public void clear() {
@@ -328,9 +380,9 @@ public class Draw {
         if (_stroke != null) {
             _g2D.setColor(_stroke);
             _g2D.drawLine(p1.x()+offset().x(),
-                          p1.y()+offset().y(),
-                          p2.x()+offset().x(),
-                          p2.y()+offset().y());
+                    p1.y()+offset().y(),
+                    p2.x()+offset().x(),
+                    p2.y()+offset().y());
         }
     }
 
@@ -340,22 +392,22 @@ public class Draw {
     public void polygon(ConstIntVector2D... points) {
         if (_expandCanvas) checkBounds(points);
 
-        int[] x_coord = new int[points.length];
-        int[] y_coord = new int[points.length];
+        int[] xCoord = new int[points.length];
+        int[] yCoord = new int[points.length];
 
         for (int i=0; i<points.length; i++) {
-            x_coord[i] = points[i].x()+offset().x();
-            y_coord[i] = points[i].y()+offset().y();
+            xCoord[i] = points[i].x()+offset().x();
+            yCoord[i] = points[i].y()+offset().y();
         }
 
         if (_fill != null) {
             _g2D.setColor(_fill);
-            _g2D.fillPolygon(x_coord, y_coord, points.length);
+            _g2D.fillPolygon(xCoord, yCoord, points.length);
         }
-        
+
         if (_stroke != null) {
             _g2D.setColor(_stroke);
-            _g2D.drawPolygon(x_coord, y_coord, points.length);
+            _g2D.drawPolygon(xCoord, yCoord, points.length);
         }
     }
 
@@ -379,16 +431,16 @@ public class Draw {
         if (_fill != null) {
             _g2D.setColor(_fill);
             _g2D.fillRect(pos.x()+offset().x(),
-                          pos.y()+offset().y(),
-                          dim.x(),
-                          dim.y());
+                    pos.y()+offset().y(),
+                    dim.x(),
+                    dim.y());
         }
         if (_stroke != null) {
             _g2D.setColor(_stroke);
             _g2D.drawRect(pos.x()+offset().x(),
-                          pos.y()+offset().y(),
-                          dim.x(),
-                          dim.y());
+                    pos.y()+offset().y(),
+                    dim.x(),
+                    dim.y());
         }
     }
 
@@ -412,25 +464,25 @@ public class Draw {
      */
     public void arc(ConstIntVector2D pos, ConstIntVector2D dim, int startAngle, int endAngle) {
         if (_expandCanvas) checkBounds(pos.sub(dim.div(2)),
-                                       pos.add(dim.div(2)));
+                pos.add(dim.div(2)));
 
         if (_fill != null) {
             _g2D.setColor(_fill);
             _g2D.fillArc(pos.x()+offset().x(),
-                         pos.y()+offset().y(),
-                         dim.x(),
-                         dim.y(),
-                         startAngle,
-                         endAngle);
+                    pos.y()+offset().y(),
+                    dim.x(),
+                    dim.y(),
+                    startAngle,
+                    endAngle);
         }
         if (_stroke != null) {
             _g2D.setColor(_stroke);
             _g2D.drawArc(pos.x()+offset().x(),
-                         pos.y()+offset().y(),
-                         dim.x(),
-                         dim.y(),
-                         startAngle,
-                         endAngle);
+                    pos.y()+offset().y(),
+                    dim.x(),
+                    dim.y(),
+                    startAngle,
+                    endAngle);
         }
     }
 
@@ -454,20 +506,20 @@ public class Draw {
         if (_fill != null) {
             _g2D.setColor(_fill);
             _g2D.fillOval(pos.x()+offset().x(),
-                          pos.y()+offset().y(),
-                          dim.x(),
-                          dim.y());
+                    pos.y()+offset().y(),
+                    dim.x(),
+                    dim.y());
         }
         if (_stroke != null) {
             _g2D.setColor(_stroke);
             _g2D.drawOval(pos.x()+offset().x(),
-                          pos.y()+offset().y(),
-                          dim.x(),
-                          dim.y());
+                    pos.y()+offset().y(),
+                    dim.x(),
+                    dim.y());
         }
     }
 
-     /** Draws an oval with the center point at ({x}, {y}) with radii ({radiusX}, {radiusY})
+    /** Draws an oval with the center point at ({x}, {y}) with radii ({radiusX}, {radiusY})
      * @param x         x-coordinate of center
      * @param y         y-coordinate of center
      * @param radiusX   x-radius of oval
@@ -483,27 +535,27 @@ public class Draw {
      */
     public void ovalCentered(ConstIntVector2D pos, ConstIntVector2D dim) {
         if (_expandCanvas) checkBounds(pos.sub(dim.div(2)),
-                                       pos.add(dim.div(2)));
+                pos.add(dim.div(2)));
 
         if (_fill != null) {
             _g2D.setColor(_fill);
             _g2D.fillOval(pos.x()-dim.x()+offset().x(),
-                          pos.y()-dim.y()+offset().y(),
-                          dim.x()*2,
-                          dim.y()*2);
+                    pos.y()-dim.y()+offset().y(),
+                    dim.x()*2,
+                    dim.y()*2);
         }
         if (_stroke != null) {
             _g2D.setColor(_stroke);
             _g2D.drawOval(pos.x()-dim.x()+offset().x(),
-                          pos.y()-dim.y()+offset().y(),
-                          dim.x()*2,
-                          dim.y()*2);
+                    pos.y()-dim.y()+offset().y(),
+                    dim.x()*2,
+                    dim.y()*2);
         }
     }
 
-    ////////////////////////////////
-    //------- TEXT DRAWING -------//
-    ////////////////////////////////
+
+    /* ========================================================== */
+    /* ====================  TEXT RENDERING  ==================== */
 
     /** Draw text with the bottom-left corner at ({x}, {y})
      * @param textToDraw    Text to draw
@@ -525,7 +577,7 @@ public class Draw {
         //TODO: checkBounds
         text(textToDraw, pos.x(), pos.y());
     }
-    
+
     /** Draw text using {font} with the bottom-left corner at ({x}, {y})
      * @param textToDraw    Text to draw
      * @param x             x-coordinate of bottom-left corner
@@ -536,7 +588,7 @@ public class Draw {
         setFont(font);
         text(textToDraw, x, y);
     }
-    
+
     /** Draw text using {font} with the bottom-left corner at {pos}
      * @param textToDraw    Text to draw
      * @param pos           Coordinate of bottom-left corner
@@ -567,7 +619,7 @@ public class Draw {
         //TODO: checkBounds
         textRight(textToDraw, pos.x(), pos.y());
     }
-    
+
     /** Draw text using {font} with the bottom-right corner at ({x}, {y})
      * @param textToDraw    Text to draw
      * @param x             x-coordinate of bottom-right corner
@@ -578,7 +630,7 @@ public class Draw {
         setFont(font);
         textRight(textToDraw, x, y);
     }
-    
+
     /** Draw text using {font} with the bottom-right corner at {pos}
      * @param textToDraw    Text to draw
      * @param pos           Coordinate of bottom-right corner
@@ -609,7 +661,7 @@ public class Draw {
         //TODO: checkBounds
         textCentered(textToDraw, pos.x(), pos.y());
     }
-    
+
     /** Draw text using {font} with the center point at ({x}, {y})
      * @param textToDraw    Text to draw
      * @param x             x-coordinate of center point
@@ -620,7 +672,7 @@ public class Draw {
         setFont(font);
         textCentered(textToDraw, x, y);
     }
-    
+
     /** Draw text using {font} with the center point at {pos}
      * @param textToDraw    Text to draw
      * @param pos           Coordinate of center point
@@ -631,9 +683,9 @@ public class Draw {
         textCentered(textToDraw, pos.x(), pos.y());
     }
 
-    /////////////////////////////////
-    //------- IMAGE DRAWING -------//
-    /////////////////////////////////
+
+    /* ========================================================== */
+    /* ===================  IMAGE RENDERING  ==================== */
 
     /** Draw image with the bottom-left corner at ({x}, {y})
      * @param imageToDraw   Image to draw
@@ -649,7 +701,7 @@ public class Draw {
      * @param pos           Coordinate of bottom-left corner
      */
     public void image(Image imageToDraw, ConstIntVector2D pos) {
-        //TODO: checkBounds
+        if (_expandCanvas) checkBounds(pos, pos.add(imageToDraw.size()));
         imageToDraw.draw(_g2D, pos.x(), pos.y());
     }
 
@@ -666,7 +718,7 @@ public class Draw {
      * @param pos           Coordinate of center
      */
     public void imageCentered(Image imageToDraw, ConstIntVector2D pos) {
-        //TODO: checkBounds
+        if (_expandCanvas) checkBounds(pos.sub(imageToDraw.size().div(2)), pos.add(imageToDraw.size().div(2)));
         imageToDraw.drawCentered(_g2D, pos.x(), pos.y());
     }
 
@@ -684,9 +736,13 @@ public class Draw {
      * @param pos           Coordinate of center
      */
     public void imageRotated(Image imageToDraw, ConstIntVector2D pos, double angle) {
-        //TODO: checkBounds
+        if (_expandCanvas) checkBounds(pos.sub(imageToDraw.size().div(2)), pos.add(imageToDraw.size().div(2)));
         imageToDraw.drawRotated(_g2D, pos.x(), pos.y(), angle);
     }
+
+
+    /* ========================================================== */
+    /* ================  DRAW OBJECT RENDERING  ================= */
 
     /** Draws another Draw object onto the back image. Draw's the context's origin at ({x}, {y}). If the context has not been offset, this point will
      * be the bottom-left corner of the context's backing image
@@ -697,7 +753,7 @@ public class Draw {
     public void drawOthercontext(Draw drawContext, int x, int y) {
         drawOthercontext(drawContext, new IntVector2D(x, y));
     }
-    
+
     /** Draws another Draw object onto the back image. Draw's the context's origin at ({x}, {y}). If the context has not been offset, this point will
      * be the bottom-left corner of the context's backing image
      * @param drawOther Draw object to render on this context

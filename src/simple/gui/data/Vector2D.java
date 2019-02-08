@@ -141,9 +141,6 @@ public class Vector2D implements ConstVector2D {
     /** Returns a vector with the same component values **/
     public Vector2D copy() { return new Vector2D(_x, _y); }
 
-    /** Returns a ConstVector2D handle for the vector **/
-    public ConstVector2D asConst() { return (ConstVector2D)this; }
-
     /** Returns this vector as an IntVector2D */
     public IntVector2D asIntVector2D() { return new IntVector2D(this); }
 

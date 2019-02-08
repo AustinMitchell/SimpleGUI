@@ -12,25 +12,23 @@ import java.awt.Graphics;
 
 @SuppressWarnings("serial")
 public abstract class SimpleGUIApp extends JPanel implements Runnable {
-    private static class GUIRunWindow extends JFrame{
-        public GUIRunWindow(SimpleGUIApp programToRun, String title, boolean isUndecorated) {
-            super(title);
-            setContentPane(programToRun);
-            setUndecorated(isUndecorated);
-            setDefaultCloseOperation(EXIT_ON_CLOSE);
-            setResizable(false);
-            pack();
-            setVisible(true);
-        }
-        @SuppressWarnings("unused")
-        public GUIRunWindow(SimpleGUIApp programToRun, String title) {
-            super(title);
-            setContentPane(programToRun);
-            setDefaultCloseOperation(EXIT_ON_CLOSE);
-            setResizable(false);
-            pack();
-            setVisible(true);
-        }
+
+    ////////////////////////////////////////////////////////////////
+    // ------------------------- STATICS ------------------------ //
+    ////////////////////////////////////////////////////////////////
+
+    private static JFrame makeNewFrame(SimpleGUIApp programToRun, String title) {
+        return makeNewFrame(programToRun, title, false);
+    }
+    private static JFrame makeNewFrame(SimpleGUIApp programToRun, String title, boolean isUndecorated) {
+        JFrame newFrame = new JFrame(title);
+        newFrame.setContentPane(programToRun);
+        newFrame.setUndecorated(isUndecorated);
+        newFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        newFrame.setResizable(false);
+        newFrame.pack();
+        newFrame.setVisible(true);
+        return newFrame;
     }
 
     /** Maximum width the window can be for you screen size **/
@@ -39,11 +37,15 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
     public static final int MAXHEIGHT = (int)java.awt.Toolkit.getDefaultToolkit().getScreenSize().getHeight();
 
     public static void start(SimpleGUIApp mainProgram, String name, boolean isUndecorated) {
-        mainProgram.setFrame(new GUIRunWindow(mainProgram, name, isUndecorated)); 
+        mainProgram.setFrame(makeNewFrame(mainProgram, name, isUndecorated)); 
     }
     public static void start(SimpleGUIApp mainProgram, String name) {
-        mainProgram.setFrame(new GUIRunWindow(mainProgram, name, false)); 
+        mainProgram.setFrame(makeNewFrame(mainProgram, name)); 
     }
+
+    ////////////////////////////////////////////////////////////////
+    // ------------------------- FIELDS ------------------------- //
+    ////////////////////////////////////////////////////////////////
 
     private Color       _backgroundColor;
     private boolean     _isRunning;
@@ -53,6 +55,10 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
     private JFrame      _frame;
     private Draw        _draw;
 
+    ////////////////////////////////////////////////////////////////
+    // ----------------------- PROPERTIES ----------------------- //
+    ////////////////////////////////////////////////////////////////
+
     /** Returns the width of the window frame **/
     public int              width()             { return _dimensions.x(); }
 
@@ -60,7 +66,7 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
     public int              height()            { return _dimensions.y(); }
 
     /** Returns the dimensions of the window frame */
-    public ConstIntVector2D dimensions()        { return _dimensions.asConst(); }
+    public ConstIntVector2D dimensions()        { return _dimensions; }
 
     /** Returns the target frames per second for the program **/
     public int              fps()               { return _fps; }
@@ -77,10 +83,11 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
     /** Returns the drawing context for the window */
     public Draw             draw()              { return _draw; }
 
+    ////////////////////////////////////////////////////////////////
+    // ------------------------- SETTERS ------------------------ //
+    ////////////////////////////////////////////////////////////////
 
-
-
-    private void setFrame(JFrame frame_) { _frame = frame_; }
+    private void setFrame(JFrame frame) { _frame = frame; }
 
     /** Sets the background color to the given color **/
     public final void setBackgroundColor(Color c) { _backgroundColor = c; }
@@ -91,6 +98,11 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
     /** Minimizes the window into the explorer bar **/
     public final void minimize() { _frame.setState(Frame.ICONIFIED); }
 
+
+    ////////////////////////////////////////////////////////////////
+    // ---------------------- CONSTRUCTORS ---------------------- //
+    ////////////////////////////////////////////////////////////////
+
     /** Creates a new SimpleGUIApp with a given width, height and target frames per second **/
     public SimpleGUIApp(int width, int height, int fps) {
         super();
@@ -100,7 +112,7 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
         _fps = fps;
         _delayTime = 1000/fps;
         _frame = (JFrame) SwingUtilities.getWindowAncestor(this);
-        
+
         addMouseListener(Input.getListener());
         addMouseMotionListener(Input.getListener());
         addMouseWheelListener(Input.getListener());
@@ -111,11 +123,9 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
         requestFocus();
     }
 
-    private void initGraphics() {
-        //_graphics = (Graphics2D)super.getGraphics();
-        _draw = new Draw(_dimensions);
-        _isRunning = true;
-    }
+    ////////////////////////////////////////////////////////////////
+    // ------------------------ OVERRIDES ----------------------- //
+    ////////////////////////////////////////////////////////////////
 
     /** Method required for the Runnable Interface; Contains the program loop **/
     @Override
@@ -130,13 +140,34 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
         System.exit(0);
     }
 
+    /** Method required for the Runnable interface. **/
+    @Override
+    public final void addNotify() {
+        super.addNotify();
+        Thread thread = new Thread(this);
+        addMouseListener(Input.getListener());
+        addMouseMotionListener(Input.getListener());
+        addMouseWheelListener(Input.getListener());
+        addKeyListener(Input.getListener());
+        thread.start();
+    }
+
+    ////////////////////////////////////////////////////////////////
+    // ------------------------- METHODS ------------------------ //
+    ////////////////////////////////////////////////////////////////
+
+    private void initGraphics() {
+        _draw = new Draw(_dimensions);
+        _isRunning = true;
+    }
+
     /** Method called before the loop begins; Set up variables here, not in your contructor **/
     public abstract void setup();
     /** Method called each frame **/
     public abstract void loop();
 
     /** Draws whatever is on the DrawModule image buffer to the program window **/
-    private void DrawToScreen() {
+    private void drawToScreen() {
         Graphics graphics = super.getGraphics();
         graphics.drawImage(_draw.canvas().bufferedImage(), 0, 0, null);
         graphics.dispose();
@@ -149,19 +180,8 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
     }
     /** Calls DrawToScreen(), Timer.correctedDelay() with your target FPS in mind and cls(). This is the most convenient way to update the screen **/
     private void updateView() {
-        DrawToScreen();
+        drawToScreen();
         Timer.correctedDelay(_delayTime);
         cls();
-    }
-    
-    /** Method required for the Runnable interface. **/
-    public final void addNotify() {
-        super.addNotify();
-        Thread thread = new Thread(this);
-        addMouseListener(Input.getListener());
-        addMouseMotionListener(Input.getListener());
-        addMouseWheelListener(Input.getListener());
-        addKeyListener(Input.getListener());
-        thread.start();
     }
 }

@@ -147,9 +147,6 @@ public class IntVector2D implements ConstIntVector2D {
     public IntVector2D copy() { return new IntVector2D(_x, _y); }
 
     /** Returns a ConstIntVector2D handle for the vector **/
-    public ConstIntVector2D asConst() { return (ConstIntVector2D)this; }
-
-    /** Returns a ConstIntVector2D handle for the vector **/
     public Vector2D asVector2D() { return new Vector2D(_x, _y); }
 
     /** [new vector] Binds the vector inside a box, whose bottom left corner and top right corner are defined by {p1} and {p2}. When called, this method will
