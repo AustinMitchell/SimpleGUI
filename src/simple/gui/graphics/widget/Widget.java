@@ -188,7 +188,7 @@ public abstract class Widget {
         _isVisible      = true;
         _isBlocked      = false;
         
-        _drawCanvas    = new Draw(_size);
+        _drawCanvas    	= new Draw(_size);
         _drawCanvas.setExpandCanvas(true);
         
         _childWidgets   = new ArrayList<>();
@@ -236,9 +236,9 @@ public abstract class Widget {
      * Updates all child widgets and this widget. If any child has been updated, it flags for rendering a new canvas.
      * If it has updated, it flags for rendering as well. If disabled, this widget won't 
      */
-    public final void update() {
+    public final boolean update() {
         if (!_isEnabled) {
-            return;
+            return false;
         }
         
         checkMouse();
@@ -251,17 +251,21 @@ public abstract class Widget {
         if (updateWidget()) {
             flagForRendering();
         }
+        
+        return _flaggedForRendering;
     }
     
     public final void render() {
+    	if (_isVisible) {
+    		return;
+    	}
+    	
         for(Widget w: _childWidgets) {
             if (w.flaggedForRendering()) {
-                if (w.isVisible()) {
-                    renderWidget();
-                }
+                w.render();
             }
         }
-        if (_flaggedForRendering && _isVisible) {
+        if (_flaggedForRendering) {
             renderWidget();
             _flaggedForRendering = false;
         }
