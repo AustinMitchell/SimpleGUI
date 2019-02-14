@@ -13,7 +13,7 @@ public class AppTest extends SimpleGUIApp {
     }
 
     public AppTest() {
-        super(500, 500, 144);
+        super(500, 500, 60);
     }
     
     Button button;
@@ -34,6 +34,8 @@ public class AppTest extends SimpleGUIApp {
             draw().text("Hovering", 0, 0);
         } else if (button.isClicking()) {
             draw().text("clicking", 0, 0);
+        } else if (button.isClicked()) {
+            draw().text("clicked", 0, 0);
         } else {
             draw().text("None", 0, 0);
         }

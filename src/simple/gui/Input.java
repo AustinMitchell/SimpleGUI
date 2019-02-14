@@ -33,7 +33,7 @@ public class Input {
 
         public void mouseWheelMoved (MouseWheelEvent e) { _BUFFERED_NOTCHES = e.getWheelRotation(); }
         
-        public void mouseClicked    (MouseEvent e) { /* Event is handled with clicking and positions states */ }
+        public void mouseClicked    (MouseEvent e) { _MOUSE_CLICKED_FLAG = true; }
         public void mouseEntered    (MouseEvent e) { /* Event is handled with clicking and positions states */ }
         public void mouseExited     (MouseEvent e) { /* Event is handled with clicking and positions states */ }
     }
@@ -43,6 +43,8 @@ public class Input {
     private static IntVector2D      _NEW_POS                = new IntVector2D(0, 0);
     private static IntVector2D      _POS_SHIFT              = new IntVector2D(0, 0);
     private static boolean          _MOUSE_DOWN             = false;
+    private static boolean          _MOUSE_CLICKED          = false;
+    private static boolean          _MOUSE_CLICKED_FLAG     = false;
     private static int              _BUFFERED_NOTCHES       = 0;
     private static int              _MOUSE_NOTCHES          = 0;
     
@@ -60,6 +62,9 @@ public class Input {
 
     /** Returns whether the mouse button is pressed down or not **/
     public static boolean mousePressed() { return _MOUSE_DOWN; }
+    
+    /** Returns whether the mouse button has been clicked */
+    public static boolean mouseClicked() { return _MOUSE_CLICKED; }
 
     /** Returns the x coordinate of the mouse from the previous frame **/
     public static int mouseOldX()   { return _OLD_POS.x(); }
@@ -121,6 +126,13 @@ public class Input {
         _OLD_POS = _POS;
         _POS = _NEW_POS;
         _POS_SHIFT = _POS.sub(_OLD_POS);
+        
+        if (_MOUSE_CLICKED_FLAG) {
+            _MOUSE_CLICKED = true;
+            _MOUSE_CLICKED_FLAG = false;
+        } else {
+            _MOUSE_CLICKED = false;
+        }
         
         _MOUSE_NOTCHES = _BUFFERED_NOTCHES;
         _BUFFERED_NOTCHES = 0;

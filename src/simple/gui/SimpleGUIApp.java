@@ -147,9 +147,9 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
         super.addNotify();
         Thread thread = new Thread(this);
         addMouseListener(Input.getListener());
-        addMouseMotionListener(Input.getListener());
-        addMouseWheelListener(Input.getListener());
-        addKeyListener(Input.getListener());
+        //addMouseMotionListener(Input.getListener());
+        //addMouseWheelListener(Input.getListener());
+        //addKeyListener(Input.getListener());
         thread.start();
     }
 
