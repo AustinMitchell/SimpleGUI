@@ -2,9 +2,9 @@ package test.simple.gui;
 
 import java.awt.Color;
 
-import simple.gui.Input;
 import simple.gui.SimpleGUIApp;
 import simple.gui.data.IntVector2D;
+import simple.gui.graphics.widget.Button;
 
 @SuppressWarnings("serial")
 public class AppTest extends SimpleGUIApp {
@@ -15,22 +15,29 @@ public class AppTest extends SimpleGUIApp {
     public AppTest() {
         super(500, 500, 144);
     }
-
-    IntVector2D control;
-    IntVector2D radius;
+    
+    Button button;
 
     @Override
     public void setup() {
-        control = new IntVector2D(200, 200);
-        radius = new IntVector2D(0);
+        button = new Button(new IntVector2D(200, 200), new IntVector2D(200, 100));
+        button.setFillColor(Color.black);
+        button.expectDarkPalette();
     }
 
     @Override
     public void loop() {
-        radius.setX((int)Input.mouse().dist(control));
-        radius.setY(radius.x());
-
-        draw().setStroke(Color.BLACK);
-        draw().ovalCentered(control, radius);        
+        button.update();
+        
+        draw().setStroke(Color.black);
+        if (button.isHovering()) {
+            draw().text("Hovering", 0, 0);
+        } else if (button.isClicking()) {
+            draw().text("clicking", 0, 0);
+        } else {
+            draw().text("None", 0, 0);
+        }
+        
+        drawWidget(button);
     }
 }

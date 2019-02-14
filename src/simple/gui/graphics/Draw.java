@@ -179,6 +179,16 @@ public class Draw {
             _g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
         }
     }
+    
+    public void setSize(ConstIntVector2D size) {        
+        Image oldImage = _canvas;
+        
+        _size   = size.copy();
+        _canvas = new Image(_size);
+        _g2D    = _canvas.graphics2D();
+        
+        oldImage.draw(_g2D, 0, 0);
+    }
 
     /** Sets the drawing fill color. 
      * @param fill      New color to use for the fill 
@@ -189,7 +199,7 @@ public class Draw {
      * the stroke thickness to 1.
      * @param stroke    New color to use for the stroke
      */
-    public void setStroke(Color stroke) { setStroke(stroke, 1); }
+    public void setStroke(Color stroke) { setStroke(stroke, 2); }
 
     /** Sets the drawing stroke color. Stroke is used for the borders of shapes as well as for rendering text.
      * @param stroke    New color to use for the stroke
@@ -239,7 +249,7 @@ public class Draw {
         if (_FONT_CACHE.containsKey(font)) {
             awtFont = _FONT_CACHE.get(font);
         } else {
-            awtFont = new Font(font._name, font._size, font._style);
+            awtFont = new Font(font._name, font._style, font._size);
             _FONT_CACHE.put(font, awtFont);
         }
 
@@ -379,7 +389,8 @@ public class Draw {
 
         if (_stroke != null) {
             _g2D.setColor(_stroke);
-            _g2D.drawLine(p1.x()+offset().x(),
+            _g2D.drawLine(
+                    p1.x()+offset().x(),
                     p1.y()+offset().y(),
                     p2.x()+offset().x(),
                     p2.y()+offset().y());
@@ -430,14 +441,16 @@ public class Draw {
 
         if (_fill != null) {
             _g2D.setColor(_fill);
-            _g2D.fillRect(pos.x()+offset().x(),
+            _g2D.fillRect(
+                    pos.x()+offset().x(),
                     pos.y()+offset().y(),
                     dim.x(),
                     dim.y());
         }
         if (_stroke != null) {
             _g2D.setColor(_stroke);
-            _g2D.drawRect(pos.x()+offset().x(),
+            _g2D.drawRect(
+                    pos.x()+offset().x(),
                     pos.y()+offset().y(),
                     dim.x(),
                     dim.y());
@@ -468,7 +481,8 @@ public class Draw {
 
         if (_fill != null) {
             _g2D.setColor(_fill);
-            _g2D.fillArc(pos.x()+offset().x(),
+            _g2D.fillArc(
+                    pos.x()+offset().x(),
                     pos.y()+offset().y(),
                     dim.x(),
                     dim.y(),
@@ -477,7 +491,8 @@ public class Draw {
         }
         if (_stroke != null) {
             _g2D.setColor(_stroke);
-            _g2D.drawArc(pos.x()+offset().x(),
+            _g2D.drawArc(
+                    pos.x()+offset().x(),
                     pos.y()+offset().y(),
                     dim.x(),
                     dim.y(),
@@ -505,14 +520,16 @@ public class Draw {
 
         if (_fill != null) {
             _g2D.setColor(_fill);
-            _g2D.fillOval(pos.x()+offset().x(),
+            _g2D.fillOval(
+                    pos.x()+offset().x(),
                     pos.y()+offset().y(),
                     dim.x(),
                     dim.y());
         }
         if (_stroke != null) {
             _g2D.setColor(_stroke);
-            _g2D.drawOval(pos.x()+offset().x(),
+            _g2D.drawOval(
+                    pos.x()+offset().x(),
                     pos.y()+offset().y(),
                     dim.x(),
                     dim.y());
@@ -539,14 +556,16 @@ public class Draw {
 
         if (_fill != null) {
             _g2D.setColor(_fill);
-            _g2D.fillOval(pos.x()-dim.x()+offset().x(),
+            _g2D.fillOval(
+                    pos.x()-dim.x()+offset().x(),
                     pos.y()-dim.y()+offset().y(),
                     dim.x()*2,
                     dim.y()*2);
         }
         if (_stroke != null) {
             _g2D.setColor(_stroke);
-            _g2D.drawOval(pos.x()-dim.x()+offset().x(),
+            _g2D.drawOval(
+                    pos.x()-dim.x()+offset().x(),
                     pos.y()-dim.y()+offset().y(),
                     dim.x()*2,
                     dim.y()*2);

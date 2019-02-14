@@ -112,9 +112,7 @@ public abstract class Widget {
     ////////////////////////////////////////////////////////////////
     
     /** Sets widget position to new vector. Should return the widget. */
-    public Widget setPosition(ConstIntVector2D pos) {
-        return addPosition(_pos.sub(pos));
-    }
+    public Widget setPosition(ConstIntVector2D pos) { return addPosition(_pos.sub(pos)); }
     
     /** Modifies position by the given difference vector. Updates all child positions as well. */
     public Widget addPosition(ConstIntVector2D diff) {
@@ -122,47 +120,79 @@ public abstract class Widget {
         for (Widget w: _childWidgets) {
             w.addPosition(diff);
         }
+        flagForRendering();
         return this;
     }
     
     /** Sets widget position to new vector. Should return the widget. */
-    protected Widget setRelativePosition(ConstIntVector2D pos) { _posRelative = pos.copy(); return this; }
+    protected Widget setRelativePosition(ConstIntVector2D pos) {
+        _posRelative = pos.copy();
+        return this;
+    }
 
     /** Sets widget size to new vector. Should return the widget. */
-    public Widget setSize(ConstIntVector2D size)            { _size = size.copy();          return this; }
+    public Widget setSize(ConstIntVector2D size) {
+        _size = size.copy();
+        _drawCanvas.setSize(size);
+        flagForRendering();
+        return this;
+    }
 
     /** Sets widget fill color to new color. Should return the widget. */
-    public Widget setFillColor(Color fillColor)             { _fillColor = fillColor;       return this; }
+    public Widget setFillColor(Color fillColor) {
+        _fillColor = fillColor;
+        flagForRendering();
+        return this;
+    }
 
     /** Sets widget stroke color to new color. Should return the widget. */
-    public Widget setStrokeColor(Color strokeColor)         { _strokeColor = strokeColor;   return this; }
+    public Widget setStrokeColor(Color strokeColor) {
+        _strokeColor = strokeColor;
+        flagForRendering();
+        return this;
+    }
 
     /** Enables or disables widget. Should return the widget. */
-    public Widget setIfEnabled(boolean isEnabled)           { _isEnabled = isEnabled;       return this; }
+    public Widget setIfEnabled(boolean isEnabled) {
+        _isEnabled = isEnabled;
+        flagForRendering();
+        return this;
+    }
     /** Sets enabled to true. Cannot override. Should return the widget. */
     public final Widget enable()                            { return setIfEnabled(true); }
     /** Sets enabled to false. Cannot override. Should return the widget. */
     public final Widget disable()                           { return setIfEnabled(false); }
 
     /** Sets widget visible or invisible. Should return the widget. */
-    public Widget setIfVisible(boolean isVisible)           { _isVisible = isVisible;       return this; }
+    public Widget setIfVisible(boolean isVisible) {
+        _isVisible = isVisible;
+        return this;
+    }
     /** Sets visiblity to true. Cannot override. Should return the widget. */
     public final Widget makeVisible()                       { return setIfVisible(true); }
     /** Sets visiblity to false. Cannot override. Should return the widget. */
     public final Widget makeInvisible()                     { return setIfVisible(false); }
 
     /** Set draw operation to do before the call to renderWidget() */
-    public Widget setDrawBefore(DrawOperation drawBefore)   { _drawBefore = drawBefore;     return this; }
+    public Widget setDrawBefore(DrawOperation drawBefore) {
+        _drawBefore = drawBefore;
+        flagForRendering();
+        return this;
+    }
     
     /** Set draw operation to do after the call to renderWidget() */
-    public Widget setDrawAfter(DrawOperation drawAfter)     { _drawAfter = drawAfter;       return this; }
+    public Widget setDrawAfter(DrawOperation drawAfter) {
+        _drawAfter = drawAfter;
+        flagForRendering();
+        return this;
+    }
 
     
     /** Blocks widget for one frame. Cannot override. */
-    public final void blockWidget()                         { _isBlocked = true; }
+    public final void blockWidget() { _isBlocked = true; }
     
     /** Flags the widget for rendering on a call to draw() */
-    private void flagForRendering()                         { _flaggedForRendering = true; }
+    private void flagForRendering() { _flaggedForRendering = true; }
 
 
     ////////////////////////////////////////////////////////////////
@@ -252,11 +282,13 @@ public abstract class Widget {
             flagForRendering();
         }
         
+        render();
+        
         return _flaggedForRendering;
     }
     
-    public final void render() {
-    	if (_isVisible) {
+    private final void render() {
+    	if (!_isVisible) {
     		return;
     	}
     	

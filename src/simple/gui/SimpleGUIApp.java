@@ -4,6 +4,7 @@ import javax.swing.*;
 
 import simple.gui.data.*;
 import simple.gui.graphics.Draw;
+import simple.gui.graphics.widget.Widget;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -161,6 +162,10 @@ public abstract class SimpleGUIApp extends JPanel implements Runnable {
         _isRunning = true;
     }
 
+    public void drawWidget(Widget w) {
+        _draw.drawOthercontext(w.draw(), w.pos());
+    }
+    
     /** Method called before the loop begins; Set up variables here, not in your contructor **/
     public abstract void setup();
     /** Method called each frame **/
