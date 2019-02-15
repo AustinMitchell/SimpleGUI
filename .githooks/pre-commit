@@ -1,0 +1,10 @@
+#!/bin/bash
+
+version_changes=$(git status -s | grep "^M" | grep "version.txt")
+
+if [[ -z "$version_changes" ]]; then
+	echo "Commits require a change to 'version.txt', Aborting commit"
+	exit 1
+fi
+
+exit 0
