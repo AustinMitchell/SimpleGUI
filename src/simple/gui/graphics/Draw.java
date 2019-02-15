@@ -44,11 +44,14 @@ public class Draw {
             
             return (_thickness == sd._thickness) && (_isRound == sd._isRound);
         }
-        
     }
 
     /** Stores font data for caching use. */
-    public static class SimpleFont{
+    public static class SimpleFont {
+    	public static final int PLAIN 		= Font.PLAIN;
+    	public static final int BOLD 		= Font.BOLD;
+    	public static final int ITALIC 		= Font.ITALIC;    	
+    	
         private String  _name;
         private int     _style;
         private int     _size;
@@ -78,6 +81,44 @@ public class Draw {
             
             return (this._name.equals(sf._name)) && (this._style == sf._style) && (this._size == sf._style);
         }
+        
+        /** Converts object to java.awt.Font */
+        public Font toAWTFont() { return new Font(_name, _style, _size); }
+        
+        /** Creates a font metrics object from the given font */
+        public Draw.SimpleFontMetrics getMetrics() { return new Draw.SimpleFontMetrics(this); }
+        
+        
+    }
+    
+    public static class SimpleFontMetrics {
+    	private static final Graphics2D GRAPHICS_CONTEXT = new Image(1, 1).graphics2D();
+    	
+    	private FontMetrics _fm;
+    	private int			_ascent;
+    	private int 		_descent;
+    	
+    	public int ascent() 	{ return _ascent; }
+    	public int descent()	{ return _descent; }
+    	
+    	public SimpleFontMetrics(SimpleFont font) {
+    		Font awtFont;
+    		if (_FONT_CACHE.containsKey(font)) {
+                awtFont = _FONT_CACHE.get(font);
+            } else {
+                awtFont = font.toAWTFont();
+                _FONT_CACHE.put(font, awtFont);
+            }
+    		
+    		_fm 		= GRAPHICS_CONTEXT.getFontMetrics(awtFont);
+    		_ascent 	= _fm.getAscent();
+    		_descent 	= _fm.getDescent();
+    	}
+    	
+    	/** Returns the width of a given string under these font metrics */
+    	public int stringWidth(String str)	{
+    		return _fm.stringWidth(str);
+    	}
     }
 
     /** Multiplies each value in a Color object by a constant.
@@ -118,15 +159,15 @@ public class Draw {
     // ------------------------- FIELDS ------------------------- //
     ////////////////////////////////////////////////////////////////
 
-    private Image           _canvas;
-    private Graphics2D      _g2D;  
-    private Draw.SimpleFont _font;
-    private FontMetrics     _fontMetrics;
-    private Color           _fill;
-    private Color           _stroke;
-    private boolean         _expandCanvas;
-    private IntVector2D     _offset;
-    private IntVector2D     _size;
+    private Image           		_canvas;
+    private Graphics2D      		_g2D;  
+    private Draw.SimpleFont 		_font;
+    private Draw.SimpleFontMetrics  _fontMetrics;
+    private Color           		_fill;
+    private Color           		_stroke;
+    private boolean         		_expandCanvas;
+    private IntVector2D     		_offset;
+    private IntVector2D     		_size;
 
 
     ////////////////////////////////////////////////////////////////
@@ -134,34 +175,34 @@ public class Draw {
     ////////////////////////////////////////////////////////////////
 
     /** Returns the width of the drawing context */
-    public int              width()         { return _size.x(); }
+    public int              		width()         { return _size.x(); }
 
     /** Returns the height of the drawing context */
-    public int              height()        { return _size.y(); }
+    public int              		height()        { return _size.y(); }
 
     /** Returns the dimensions of the drawing context */
-    public ConstIntVector2D size()          { return _size; }
+    public ConstIntVector2D 		size()          { return _size; }
 
     /** Returns the internal offset of the drawing context used against drawing operations */
-    public ConstIntVector2D offset()        { return _offset; }
+    public ConstIntVector2D 		offset()        { return _offset; }
 
     /** Returns the backing image object */
-    public Image            canvas()        { return _canvas; }
+    public Image            		canvas()        { return _canvas; }
 
     /** Returns the stored Graphics2D object. */
-    public Graphics2D       g2D()           { return _g2D; }
+    public Graphics2D       		g2D()           { return _g2D; }
 
     /** Returns the current text drawing font*/
-    public Draw.SimpleFont  font()          { return _font; }
+    public Draw.SimpleFont  		font()          { return _font; }
 
-    /** Returns a FontMetrics object from the stored Graphics2D object's current font. */
-    public FontMetrics      fontMetrics()   { return _fontMetrics; }
+    /** Returns a SimpleFontMetrics object based on the current font. */
+    public Draw.SimpleFontMetrics   fontMetrics()   { return _fontMetrics; }
 
     /** Returns the stored fill color */
-    public Color            fill()          { return _fill; }
+    public Color            		fill()          { return _fill; }
 
     /** Returns the stored stroke color */
-    public Color            stroke()        { return _stroke; }
+    public Color            		stroke()        { return _stroke; }
 
 
     ////////////////////////////////////////////////////////////////
@@ -249,13 +290,13 @@ public class Draw {
         if (_FONT_CACHE.containsKey(font)) {
             awtFont = _FONT_CACHE.get(font);
         } else {
-            awtFont = new Font(font._name, font._style, font._size);
+            awtFont = font.toAWTFont();
             _FONT_CACHE.put(font, awtFont);
         }
 
         _font = font;
         _g2D.setFont(awtFont);
-        _fontMetrics = _g2D.getFontMetrics();
+        _fontMetrics = font.getMetrics();
     }
 
     /**  Set whether to expand canvas on drawing operations. If false, when you draw out of bounds of the backing image, the out of bounds operations
@@ -296,7 +337,6 @@ public class Draw {
     public Draw(Image imageContext) {
         _canvas         = imageContext;
         _g2D            = _canvas.graphics2D();
-        _fontMetrics    = _g2D.getFontMetrics();
         _fill           = EMPTY_COLOR;
         _stroke         = EMPTY_COLOR;
         _offset         = new IntVector2D(0, 0);
@@ -584,7 +624,7 @@ public class Draw {
     public void text(String textToDraw, int x, int y) {
         if (_stroke != null) {
             _g2D.setColor(_stroke);
-            _g2D.drawString(textToDraw, x, y + _fontMetrics.getMaxAscent());
+            _g2D.drawString(textToDraw, x, y + _fontMetrics.ascent());
         }
     }
 
@@ -626,7 +666,7 @@ public class Draw {
     public void textRight(String textToDraw, int x, int y) {
         if (_stroke != null) {
             _g2D.setColor(_stroke);
-            _g2D.drawString(textToDraw, x-_fontMetrics.stringWidth(textToDraw), y + _fontMetrics.getMaxAscent());
+            _g2D.drawString(textToDraw, x-_fontMetrics.stringWidth(textToDraw), y + _fontMetrics.ascent());
         }
     }
 
@@ -668,7 +708,7 @@ public class Draw {
     public void textCentered(String textToDraw, int x, int y) {
         if (_stroke != null) {
             _g2D.setColor(_stroke);
-            _g2D.drawString(textToDraw, x - _fontMetrics.stringWidth(textToDraw)/2, (int)(y + _fontMetrics.getStringBounds(textToDraw, _g2D).getHeight()/4.0));
+            _g2D.drawString(textToDraw, x - _fontMetrics.stringWidth(textToDraw)/2, (int)(y + _fontMetrics.ascent()/2.0));
         }
     }
 

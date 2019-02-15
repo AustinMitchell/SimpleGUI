@@ -17,12 +17,14 @@ public class AppTest extends SimpleGUIApp {
     }
     
     Button button;
-
+    int clickcount;
+    
     @Override
     public void setup() {
         button = new Button(new IntVector2D(200, 200), new IntVector2D(200, 100));
         button.setFillColor(Color.black);
         button.expectDarkPalette();
+        clickcount = 0;
     }
 
     @Override
@@ -35,10 +37,12 @@ public class AppTest extends SimpleGUIApp {
         } else if (button.isClicking()) {
             draw().text("clicking", 0, 0);
         } else if (button.isClicked()) {
-            draw().text("clicked", 0, 0);
+        	clickcount++;
         } else {
             draw().text("None", 0, 0);
         }
+        
+        draw().text(""+clickcount, 0, 12);
         
         drawWidget(button);
     }
