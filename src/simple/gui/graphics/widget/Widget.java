@@ -10,96 +10,92 @@ import simple.gui.data.IntVector2D;
 import simple.gui.graphics.Draw;
 import simple.gui.graphics.DrawOperation;
 
-/**
- * Class which all widgets are derived from. Controls most internal mechanisms, only 
- * requires the user to implement the drawWidget and updateWidget functions
- */
+/** Class which all widgets are derived from. Controls most internal mechanisms, only requires the user to implement the
+ * drawWidget and updateWidget functions */
 public abstract class Widget {
     ////////////////////////////////////////////////////////////////
     // ------------------------- STATICS ------------------------ //
     ////////////////////////////////////////////////////////////////
 
 
-
-    public static final Color DEFAULT_FILL_COLOR    = Color.white;
-    public static final Color DEFAULT_STROKE_COLOR  = Color.black;
+    public static final Color DEFAULT_FILL_COLOR   = Color.white;
+    public static final Color DEFAULT_STROKE_COLOR = Color.black;
 
     ////////////////////////////////////////////////////////////////
     // ------------------------- FIELDS ------------------------- //
     ////////////////////////////////////////////////////////////////
 
-    protected IntVector2D   _pos;
-    protected IntVector2D   _size;
-    protected IntVector2D   _posRelative;
-    protected Color         _fillColor;
-    protected Color         _strokeColor;
+    protected IntVector2D _pos;
+    protected IntVector2D _size;
+    protected IntVector2D _posRelative;
+    protected Color       _fillColor;
+    protected Color       _strokeColor;
 
-    private boolean     _isHovering;
-    private boolean     _isClicking;
-    private boolean     _isClicked;
-    private boolean     _isEnabled;
-    private boolean     _isVisible;
-    private boolean     _isBlocked;
-    private boolean     _flaggedForRendering;
+    private boolean _isHovering;
+    private boolean _isClicking;
+    private boolean _isClicked;
+    private boolean _isEnabled;
+    private boolean _isVisible;
+    private boolean _isBlocked;
+    private boolean _flaggedForRendering;
 
-    private Draw            _drawCanvas;
-    private DrawOperation   _drawBefore;
-    private DrawOperation   _drawAfter;
-    private List<Widget> _childWidgets;
+    private Draw          _drawCanvas;
+    private DrawOperation _drawBefore;
+    private DrawOperation _drawAfter;
+    private List<Widget>  _childWidgets;
 
     ////////////////////////////////////////////////////////////////
     // ----------------------- PROPERTIES ----------------------- //
     ////////////////////////////////////////////////////////////////
 
     /** Returns a constant reference to position vector relative to its parent widget */
-    public ConstIntVector2D pos()           { return _pos; }
+    public ConstIntVector2D pos() { return _pos; }
 
     /** Returns a vector for the mouse position relative to the widget */
     protected ConstIntVector2D posRelative() { return _posRelative; }
 
     /** Returns a constant reference to size vector */
-    public ConstIntVector2D size()          { return _size; }
+    public ConstIntVector2D size() { return _size; }
 
     /** Returns the fill color */
-    public Color            fillColor()     { return _fillColor; }
+    public Color fillColor() { return _fillColor; }
 
     /** Returns the stroke color */
-    public Color            strokeColor()   { return _strokeColor; }
+    public Color strokeColor() { return _strokeColor; }
 
     /** Returns if the mouse is considered to be hovering over the widget */
-    public boolean          isHovering()    { return _isHovering; }
+    public boolean isHovering() { return _isHovering; }
 
     /** Returns if the mouse is considered to be clicking on the widget */
-    public boolean          isClicking()    { return _isClicking; }
+    public boolean isClicking() { return _isClicking; }
 
-    /** Returns if the widget has been considered to have been clicked. This is the transition from mouse button down to mouse button up */
-    public boolean          isClicked()     { return _isClicked; }
+    /** Returns if the widget has been considered to have been clicked. This is the transition from mouse button down to
+     * mouse button up */
+    public boolean isClicked() { return _isClicked; }
 
     /** Returns if the widget is enabled for user interaction. If disabled, no updates will occur */
-    public boolean          isEnabled()     { return _isEnabled; }
+    public boolean isEnabled() { return _isEnabled; }
 
     /** Returns if the widget is visible to the user. If disabled, no drawing will take place */
-    public boolean          isVisible()     { return _isVisible; }
+    public boolean isVisible() { return _isVisible; }
 
     /** Returns if the widget is blocked. This will mean no mouse interaction is possible. */
-    public boolean          isBlocked()     { return _isBlocked; }
+    public boolean isBlocked() { return _isBlocked; }
 
-    /** Returns if the mouse is contained within the widget*/
-    public boolean          containsMouse() {
-        return Input.mouse().isBoundWithinBox(_pos, _size);
-    }
+    /** Returns if the mouse is contained within the widget */
+    public boolean containsMouse() { return Input.mouse().isBoundWithinBox(_pos, _size); }
 
     /** Return the draw operation that occurs before the call to 'render' */
-    public DrawOperation    drawBefore()    { return _drawBefore; }
+    public DrawOperation drawBefore() { return _drawBefore; }
 
     /** Return the draw operation that occurs after the call to 'render' */
-    public DrawOperation    drawAfter()     { return _drawAfter; }
+    public DrawOperation drawAfter() { return _drawAfter; }
 
     /** Returns the widget's drawing context */
-    public Draw             draw()          { return _drawCanvas; }
+    public Draw draw() { return _drawCanvas; }
 
     /** Returns if the widget has been flagged for rendering */
-    private boolean flaggedForRendering()   { 
+    private boolean flaggedForRendering() {
         if (_flaggedForRendering) {
             _flaggedForRendering = false;
             return true;
@@ -158,20 +154,24 @@ public abstract class Widget {
         flagForRendering();
         return this;
     }
+
     /** Sets enabled to true. Cannot override. Should return the widget. */
-    public final Widget enable()                            { return setIfEnabled(true); }
+    public final Widget enable() { return setIfEnabled(true); }
+
     /** Sets enabled to false. Cannot override. Should return the widget. */
-    public final Widget disable()                           { return setIfEnabled(false); }
+    public final Widget disable() { return setIfEnabled(false); }
 
     /** Sets widget visible or invisible. Should return the widget. */
     public Widget setIfVisible(boolean isVisible) {
         _isVisible = isVisible;
         return this;
     }
+
     /** Sets visiblity to true. Cannot override. Should return the widget. */
-    public final Widget makeVisible()                       { return setIfVisible(true); }
+    public final Widget makeVisible() { return setIfVisible(true); }
+
     /** Sets visiblity to false. Cannot override. Should return the widget. */
-    public final Widget makeInvisible()                     { return setIfVisible(false); }
+    public final Widget makeInvisible() { return setIfVisible(false); }
 
     /** Set draw operation to do before the call to renderWidget() */
     public Widget setDrawBefore(DrawOperation drawBefore) {
@@ -199,29 +199,27 @@ public abstract class Widget {
     // ---------------------- CONSTRUCTORS ---------------------- //
     ////////////////////////////////////////////////////////////////
 
-    public Widget() {
-        this(new IntVector2D(0, 0), new IntVector2D(10, 10));
-    }
+    public Widget() { this(new IntVector2D(0, 0), new IntVector2D(10, 10)); }
 
     public Widget(ConstIntVector2D pos, ConstIntVector2D size) {
-        _pos            = pos.copy();
-        _posRelative    = pos.copy();
-        _size           = size.copy();
+        _pos         = pos.copy();
+        _posRelative = pos.copy();
+        _size        = size.copy();
 
-        _fillColor      = DEFAULT_FILL_COLOR;
-        _strokeColor    = DEFAULT_STROKE_COLOR;
+        _fillColor   = DEFAULT_FILL_COLOR;
+        _strokeColor = DEFAULT_STROKE_COLOR;
 
-        _isHovering     = false;
-        _isClicking     = false;
-        _isClicked      = false;
-        _isEnabled      = true;
-        _isVisible      = true;
-        _isBlocked      = false;
+        _isHovering = false;
+        _isClicking = false;
+        _isClicked  = false;
+        _isEnabled  = true;
+        _isVisible  = true;
+        _isBlocked  = false;
 
-        _drawCanvas    	= new Draw(_size);
+        _drawCanvas = new Draw(_size);
         _drawCanvas.setExpandCanvas(true);
 
-        _childWidgets   = new ArrayList<>();
+        _childWidgets = new ArrayList<>();
 
         _flaggedForRendering = true;
     }
@@ -231,41 +229,38 @@ public abstract class Widget {
     ////////////////////////////////////////////////////////////////
 
 
-
     ////////////////////////////////////////////////////////////////
     // ------------------------- METHODS ------------------------ //
     ////////////////////////////////////////////////////////////////
 
-    /** Draws another widget onto this widget's drawing canvas. This should be used when rendering other widgets onto yourself */
+    /** Draws another widget onto this widget's drawing canvas. This should be used when rendering other widgets onto
+     * yourself */
     protected final void drawAnotherWidget(Widget other) {
         if (other.isVisible()) {
             _drawCanvas.drawOthercontext(other.draw(), other.posRelative());
         }
     }
 
-    /**
-     * Registers widget as a child of this widget. This is necessary for the chaining process of updates and rendering.
-     * If your widget creates and stores widgets inside it, they need to be registered to the parent. The position of the registered
-     * widget will be offset by the position of this widget, but internally the relative position will not change unless explicitly stated
-     * @param widget    New child widget to register
-     */
+    /** Registers widget as a child of this widget. This is necessary for the chaining process of updates and rendering.
+     * If your widget creates and stores widgets inside it, they need to be registered to the parent. The position of
+     * the registered widget will be offset by the position of this widget, but internally the relative position will
+     * not change unless explicitly stated
+     * @param widget New child widget to register */
     protected void registerWidget(Widget widget) {
         _childWidgets.add(widget);
         widget.addPosition(_pos);
     }
 
-    /** 
-     * Updates the widget.
-     * @return boolean Returns whether the widget should be flagged for rendering
-     */
-    protected abstract boolean  updateWidget();
-    /** Renders the widget and all of its children. When other rendering widgets to this widget, use drawAnotherWidget() */
-    protected abstract void     renderWidget();
+    /** Updates the widget.
+     * @return boolean Returns whether the widget should be flagged for rendering */
+    protected abstract boolean updateWidget();
 
-    /** 
-     * Updates all child widgets and this widget. If any child has been updated, it flags for rendering a new canvas.
-     * If it has updated, it flags for rendering as well. If disabled, this widget won't 
-     */
+    /** Renders the widget and all of its children. When other rendering widgets to this widget, use
+     * drawAnotherWidget() */
+    protected abstract void renderWidget();
+
+    /** Updates all child widgets and this widget. If any child has been updated, it flags for rendering a new canvas.
+     * If it has updated, it flags for rendering as well. If disabled, this widget won't */
     public final boolean update() {
         if (!_isEnabled) {
             return false;
@@ -273,7 +268,7 @@ public abstract class Widget {
 
         checkMouse();
 
-        for(Widget w: _childWidgets) {
+        for (Widget w: _childWidgets) {
             if (w.updateWidget()) {
                 flagForRendering();
             }
@@ -292,7 +287,7 @@ public abstract class Widget {
             return;
         }
 
-        for(Widget w: _childWidgets) {
+        for (Widget w: _childWidgets) {
             if (w.flaggedForRendering()) {
                 w.render();
             }
@@ -327,7 +322,7 @@ public abstract class Widget {
             // If mouse was hovering last frame and mouse is pressed, then the widget is currently being clicked on
             _isHovering = false;
             _isClicking = true;
-        } 
+        }
     }
 
 }

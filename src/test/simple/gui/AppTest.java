@@ -8,17 +8,13 @@ import simple.gui.graphics.widget.Button;
 
 @SuppressWarnings("serial")
 public class AppTest extends SimpleGUIApp {
-    public static void main(String[] args) {
-        SimpleGUIApp.start(new AppTest(), "App Test");
-    }
+    public static void main(String[] args) { SimpleGUIApp.start(new AppTest(), "App Test"); }
 
-    public AppTest() {
-        super(500, 500, 60);
-    }
-    
+    public AppTest() { super(500, 500, 60); }
+
     Button button;
-    int clickcount;
-    
+    int    clickcount;
+
     @Override
     public void setup() {
         button = new Button(new IntVector2D(200, 200), new IntVector2D(200, 100));
@@ -30,20 +26,20 @@ public class AppTest extends SimpleGUIApp {
     @Override
     public void loop() {
         button.update();
-        
+
         draw().setStroke(Color.black);
         if (button.isHovering()) {
             draw().text("Hovering", 0, 0);
         } else if (button.isClicking()) {
             draw().text("clicking", 0, 0);
         } else if (button.isClicked()) {
-        	clickcount++;
+            clickcount++;
         } else {
             draw().text("None", 0, 0);
         }
-        
-        draw().text(""+clickcount, 0, 12);
-        
+
+        draw().text("" + clickcount, 0, 12);
+
         drawWidget(button);
     }
 }
