@@ -21,6 +21,7 @@ public abstract class Widget {
     public static final Color DEFAULT_FILL_COLOR   = Color.white;
     public static final Color DEFAULT_STROKE_COLOR = Color.black;
 
+
     ////////////////////////////////////////////////////////////////
     // ------------------------- FIELDS ------------------------- //
     ////////////////////////////////////////////////////////////////
@@ -43,6 +44,7 @@ public abstract class Widget {
     private DrawOperation _drawBefore;
     private DrawOperation _drawAfter;
     private List<Widget>  _childWidgets;
+
 
     ////////////////////////////////////////////////////////////////
     // ----------------------- PROPERTIES ----------------------- //
@@ -102,6 +104,7 @@ public abstract class Widget {
         }
         return false;
     }
+
 
     ////////////////////////////////////////////////////////////////
     // ------------------------- SETTERS ------------------------ //
@@ -223,6 +226,7 @@ public abstract class Widget {
 
         _flaggedForRendering = true;
     }
+
 
     ////////////////////////////////////////////////////////////////
     // ------------------------ OVERRIDES ----------------------- //
