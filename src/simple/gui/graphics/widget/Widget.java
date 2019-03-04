@@ -202,9 +202,7 @@ public abstract class Widget {
     // ---------------------- CONSTRUCTORS ---------------------- //
     ////////////////////////////////////////////////////////////////
 
-    public Widget() { this(new IntVector2D(0, 0), new IntVector2D(10, 10)); }
-
-    public Widget(ConstIntVector2D pos, ConstIntVector2D size) {
+    protected Widget(ConstIntVector2D pos, ConstIntVector2D size) {
         _pos         = pos.copy();
         _posRelative = pos.copy();
         _size        = size.copy();
